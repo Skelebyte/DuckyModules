@@ -1,0 +1,5 @@
+{
+  "C_Cpp.default.defines": [
+    "DUCKY_WINDOW_SDL_IMPL"
+  ]
+}
