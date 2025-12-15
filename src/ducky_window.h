@@ -16,13 +16,15 @@
 
 #pragma region Types
 
-typedef enum d_ViewportState {
+typedef enum d_ViewportState
+{
   DUCKY_LETTERBOXED,
   DUCKY_PILLARBOXED
 } ViewportState,
     d_ViewportState;
 
-typedef struct d_Viewport {
+typedef struct d_Viewport
+{
   int target_aspect_w;
   int target_aspect_h;
 
@@ -34,7 +36,8 @@ typedef struct d_Viewport {
   d_ViewportState state;
 } Viewport, d_Viewport;
 
-typedef struct d_Window {
+typedef struct d_Window
+{
   const char *title;
   int width;
   int height;
@@ -96,7 +99,13 @@ void d_window_update(d_Window *window);
   - `DUCKY_NULL_REFERENCE`: If the `window` argument is NULL.
 */
 void d_window_get_dimensions(d_Window *window, int *width, int *height);
-
+/*
+  Swap the buffers of the specified window.
+  #### Parameters:
+  - `window`: The window to swap buffers for.
+  #### Throws:
+  - `DUCKY_NULL_REFERENCE`: If the `window` argument is NULL.
+*/
 void d_window_swap_buffers(d_Window *window);
 #pragma endregion
 
@@ -104,26 +113,33 @@ void d_window_swap_buffers(d_Window *window);
 
 #ifdef DUCKY_WINDOW_IMPL
 d_Viewport *d_viewport_create(const int target_aspect_w,
-                              const int target_aspect_h) {
+                              const int target_aspect_h)
+{
   d_Viewport *viewport = (d_Viewport *)malloc(sizeof(d_Viewport));
   viewport->target_aspect_w = target_aspect_w;
   viewport->target_aspect_h = target_aspect_h;
   return viewport;
 }
 
-void d_viewport_destroy(d_Viewport *viewport) {
-  if (viewport != NULL) {
+void d_viewport_destroy(d_Viewport *viewport)
+{
+  if (viewport != NULL)
+  {
     free(viewport);
-  } else {
+  }
+  else
+  {
     d_throw_error(DUCKY_NULL_REFERENCE,
                   "(d_viewport_destroy) viewport is NULL.");
   }
 }
 
 d_Window *d_window_create(const char *title, const int width, const int height,
-                          const bool resizable, const bool fullscreen) {
+                          const bool resizable, const bool fullscreen)
+{
 
-  if (SDL_Init(SDL_INIT_VIDEO) == false) {
+  if (SDL_Init(SDL_INIT_VIDEO) == false)
+  {
     char message[256] = "Failed to initialize SDL: ";
     strcat(message, SDL_GetError());
     d_throw_error(DUCKY_CRITICAL, message);
@@ -131,16 +147,19 @@ d_Window *d_window_create(const char *title, const int width, const int height,
   }
 
   SDL_WindowFlags window_flags = SDL_WINDOW_OPENGL;
-  if (resizable) {
+  if (resizable)
+  {
     window_flags |= SDL_WINDOW_RESIZABLE;
   }
-  if (fullscreen) {
+  if (fullscreen)
+  {
     window_flags |= SDL_WINDOW_FULLSCREEN;
   }
 
   SDL_Window *sdl_window = SDL_CreateWindow(title, width, height, window_flags);
 
-  if (!sdl_window) {
+  if (!sdl_window)
+  {
     char message[256] = "Failed to create SDL window: ";
     strcat(message, SDL_GetError());
     SDL_Quit();
@@ -156,7 +175,8 @@ d_Window *d_window_create(const char *title, const int width, const int height,
   SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 8);
 
   SDL_GLContext gl_context = SDL_GL_CreateContext(sdl_window);
-  if (!gl_context) {
+  if (!gl_context)
+  {
     char message[256] = "Failed to create OpenGL context: ";
     strcat(message, SDL_GetError());
     SDL_DestroyWindow(sdl_window);
@@ -168,7 +188,8 @@ d_Window *d_window_create(const char *title, const int width, const int height,
   }
 
 #ifdef DUCKY_GLAD_IMPL
-  if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) {
+  if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress))
+  {
     SDL_DestroyWindow(sdl_window);
     SDL_Quit();
     d_throw_error(DUCKY_CRITICAL, "Failed to initialize GLAD");
@@ -192,8 +213,10 @@ d_Window *d_window_create(const char *title, const int width, const int height,
   return window;
 }
 
-void d_window_destroy(d_Window *window) {
-  if (window == NULL) {
+void d_window_destroy(d_Window *window)
+{
+  if (window == NULL)
+  {
     return;
   }
 
@@ -203,15 +226,18 @@ void d_window_destroy(d_Window *window) {
   SDL_Quit();
 }
 
-void d_window_update(d_Window *window) {
-  if (window == NULL) {
+void d_window_update(d_Window *window)
+{
+  if (window == NULL)
+  {
     d_throw_error(DUCKY_NULL_REFERENCE, "(d_window_update) window is NULL.");
     return;
   }
 
   SDL_Event event;
 
-  while (SDL_PollEvent(&event)) {
+  while (SDL_PollEvent(&event))
+  {
     if (event.type == SDL_EVENT_QUIT)
       window->running = false;
   }
@@ -222,7 +248,8 @@ void d_window_update(d_Window *window) {
   float game_aspect = (float)window->viewport->target_aspect_w /
                       window->viewport->target_aspect_h;
 
-  if (window_aspect > game_aspect) {
+  if (window_aspect > game_aspect)
+  {
     window->viewport->viewport_w = (int)(window->height * game_aspect);
     window->viewport->viewport_h = window->height;
 
@@ -230,7 +257,9 @@ void d_window_update(d_Window *window) {
         (window->width - window->viewport->viewport_w) / 2;
     window->viewport->viewport_y = 0;
     window->viewport->state = DUCKY_PILLARBOXED;
-  } else {
+  }
+  else
+  {
     window->viewport->viewport_w = window->width;
     window->viewport->viewport_h = (int)(window->width / game_aspect);
 
@@ -244,8 +273,10 @@ void d_window_update(d_Window *window) {
              window->viewport->viewport_w, window->viewport->viewport_h);
 }
 
-void d_window_get_dimensions(d_Window *window, int *width, int *height) {
-  if (window == NULL) {
+void d_window_get_dimensions(d_Window *window, int *width, int *height)
+{
+  if (window == NULL)
+  {
     d_throw_error(DUCKY_NULL_REFERENCE,
                   "(d_window_get_dimensions) window is NULL.");
     return;
@@ -254,8 +285,10 @@ void d_window_get_dimensions(d_Window *window, int *width, int *height) {
   SDL_GetWindowSize((SDL_Window *)window->native_window, width, height);
 }
 
-void d_window_swap_buffers(d_Window *window) {
-  if (window == NULL) {
+void d_window_swap_buffers(d_Window *window)
+{
+  if (window == NULL)
+  {
     d_throw_error(DUCKY_NULL_REFERENCE,
                   "(d_window_swap_buffers) window is NULL.");
     return;
