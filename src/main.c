@@ -6,15 +6,12 @@
 #define DUCKY_WINDOW_IMPL
 #define DUCKY_GLAD_IMPL "glad/glad.h"
 #include "ducky_window.h"
+// #define DUCKY_GFX_IMPL
+// #include "ducky_gfx.h"
 #include <stdio.h>
 
 void main() {
   Window *window = d_window_create("Ducky Window", 800, 600, true, false);
-
-  if (window == NULL) {
-    d_get_error();
-    return;
-  }
 
   while (window->running) {
     d_window_update(window);
