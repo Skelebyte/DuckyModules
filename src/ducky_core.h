@@ -1,6 +1,7 @@
 #ifndef DUCKY_CORE_H
 #define DUCKY_CORE_H
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #ifdef DUCKY_CORE_PRINT_ERRORS
@@ -105,6 +106,37 @@ void d_event_system_destroy(d_EventSystem *event_system);
 d_Event *d_event_system_get_event(d_EventSystem *event_system,
                                   const char *name);
 void d_event_system_add_event(d_EventSystem *event_system, const char *name);
+
+#pragma endregion
+
+#pragma region File
+
+typedef struct d_File {
+  char *data;
+  const char *path;
+  size_t size;
+} File, d_File;
+
+d_File *d_file_read(const char *path);
+void d_file_destroy(d_File *file);
+void d_file_edit(d_File *file, const char *data);
+void d_file_save(d_File *file);
+
+#pragma endregion
+
+#pragma region Utilities
+
+/**
+ * @brief Finds the first occurrence of target character in the given string.
+ *
+ * @param str string to search.
+ * @param target target string to find.
+ * @param index_offset offset to add to the returned index. `0` if finding from
+ * the start of the string.
+ * @return The position of the first character of `target` in the string, and
+ * `-1` and no match was found.
+ */
+int d_str_find(const char *str, const char *target, unsigned int index_offset);
 
 #pragma endregion
 
@@ -381,6 +413,125 @@ void d_core_shutdown() {
   d_event_system_destroy(d_event_system);
   free(d_last_error);
 }
+#pragma endregion
+
+#pragma region File
+
+d_File *d_file_read(const char *path) {
+  FILE *file = fopen(path, "rb");
+  if (file == NULL) {
+    d_throw_error(&DUCKY_FAILURE, "Failed to open file.", __FILE__,
+                  __FUNCTION__);
+    return NULL;
+  }
+
+  fseek(file, 0, SEEK_END);
+  long length = ftell(file);
+  fseek(file, 0, SEEK_SET);
+
+  char *buffer = malloc(length + 1);
+  if (buffer == NULL) {
+    fclose(file);
+    d_throw_error(&DUCKY_MEMORY_FAILURE, "Failed to allocate memory for file.",
+                  __FILE__, __FUNCTION__);
+    return NULL;
+  }
+
+  fread(buffer, length, 1, file);
+  fclose(file);
+
+  buffer[length] = 0;
+
+  d_File *d_file = malloc(sizeof(d_File));
+  if (d_file == NULL) {
+    free(buffer);
+    d_throw_error(&DUCKY_MEMORY_FAILURE,
+                  "Failed to allocate memory for d_File.", __FILE__,
+                  __FUNCTION__);
+    return NULL;
+  }
+
+  d_file->data = buffer;
+
+  return d_file;
+}
+
+void d_file_destroy(d_File *file) {
+  if (file != NULL) {
+    if (file->data != NULL) {
+      free(file->data);
+    }
+    free(file);
+  } else {
+    d_throw_error(&DUCKY_NULL_REFERENCE, "file is NULL.", __FILE__,
+                  __FUNCTION__);
+  }
+}
+
+void d_file_edit(d_File *file, const char *data) {
+  if (file == NULL) {
+    d_throw_error(&DUCKY_NULL_REFERENCE, "file is NULL.", __FILE__,
+                  __FUNCTION__);
+    return;
+  }
+
+  size_t data_length = strlen(data);
+  file->data = realloc(file->data, data_length + 1);
+  if (file->data == NULL) {
+    d_throw_error(&DUCKY_MEMORY_FAILURE,
+                  "Failed to allocate memory for file data.", __FILE__,
+                  __FUNCTION__);
+    return;
+  }
+
+  strcpy(file->data, data);
+  file->size = data_length;
+}
+
+#pragma endregion
+
+#pragma region Utilities
+
+// using an int to count how many characters match the target, and when the
+// amount is equal to the length of the target, break.
+int d_str_find(const char *str, const char *target, unsigned int index_offset) {
+  if (str == NULL) {
+    d_throw_error(&DUCKY_NULL_REFERENCE, "str is NULL.", __FILE__,
+                  __FUNCTION__);
+    return -1;
+  }
+
+  bool matches = false;
+  int match_position = -1;
+  int match_amount = 0;
+
+  for (size_t i = index_offset; i < strlen(str); i++) {
+    if (str[i] == target[0]) {
+      for (int j = 0; j < strlen(target) + 1; j++) {
+        if (match_amount == (int)strlen(target)) {
+          break;
+        }
+        if (str[i + j] == target[j]) {
+          matches = true;
+          match_amount++;
+        } else {
+          matches = false;
+          match_amount = 0;
+          break;
+        }
+      }
+      if (matches) {
+        match_position = i;
+        break;
+      } else {
+        match_position = -1;
+      }
+    }
+  }
+
+  return match_position;
+}
+
 #pragma endregion
 
 #endif

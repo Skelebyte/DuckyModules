@@ -172,7 +172,8 @@ void d_ebo_unbind(d_EBO *ebo);
 #pragma endregion
 
 #pragma region Shader Functions
-d_Shader *d_shader_create(const char *vertex_src, const char *fragment_src);
+d_Shader *d_shader_create(const char *vertex_file_path,
+                          const char *fragment_file_path);
 void d_shader_destroy(d_Shader *shader);
 void d_shader_activate(d_Shader *shader);
 #pragma endregion
@@ -490,48 +491,36 @@ void d_ebo_unbind(d_EBO *ebo) {
 #pragma endregion
 
 #pragma region Shader Functions
-d_Shader *d_shader_create(const char *vertex_src, const char *fragment_src) {
-  FILE *vertex_file = fopen(vertex_src, "r");
-  if (vertex_file == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "vertex shader file not found.",
-                  __FILE__, __FUNCTION__);
-    return NULL;
-  }
+d_Shader *d_shader_create(const char *vertex_file_path,
+                          const char *fragment_file_path) {
+  d_Shader *shader = malloc(sizeof(d_Shader));
 
-  if (fseek(vertex_file, 0, SEEK_END) != 0) {
-    fclose(vertex_file);
-    d_throw_error(&DUCKY_FAILURE, "fseek failed.", __FILE__, __FUNCTION__);
-    return NULL;
-  }
-
-  unsigned long vertex_file_size = ftell(vertex_file);
-
-  if (vertex_file_size == -1L) {
-    fclose(vertex_file);
-    d_throw_error(&DUCKY_FAILURE, "ftell failed.", __FILE__, __FUNCTION__);
-    return NULL;
-  }
-  rewind(vertex_file);
-
-  char *vertex_file_buffer = malloc(sizeof(char) * (vertex_file_size + 1));
-
-  if (vertex_file_buffer == NULL) {
-    fclose(vertex_file);
+  if (shader == NULL) {
     d_throw_error(&DUCKY_MEMORY_FAILURE, "malloc failed.", __FILE__,
                   __FUNCTION__);
     return NULL;
   }
 
-  fclose(vertex_file);
-
-  //  max light stuff, compile shaders...
-
-  FILE *fragment_file = fopen(fragment_src, "r");
-  if (fragment_file == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "fragment shader file not found.",
+  d_File *vertex_file = d_file_read(vertex_file_path);
+  if (vertex_file == NULL) {
+    d_throw_error(&DUCKY_FAILURE, "Failed to read vertex shader file.",
                   __FILE__, __FUNCTION__);
+    free(shader);
     return NULL;
   }
+
+  d_File *fragment_file = d_file_read(fragment_file_path);
+  if (fragment_file == NULL) {
+    d_throw_error(&DUCKY_FAILURE, "Failed to read fragment shader file.",
+                  __FILE__, __FUNCTION__);
+    free(shader);
+    d_file_destroy(vertex_file);
+    return NULL;
+  }
+
+  d_file_destroy(vertex_file);
+  d_file_destroy(fragment_file);
+  return shader;
 }
 void d_shader_destroy(d_Shader *shader) {}
 void d_shader_activate(d_Shader *shader) {}
