@@ -8,113 +8,34 @@
 #include "ducky_window.h"
 #define DUCKY_GFX_IMPL
 #include "ducky_gfx.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
-typedef void (*EventFunction)();
+int main(int argc, char **argv) {
+  d_core_init();
 
-typedef struct d_Event {
-  EventFunction function;
-  EventFunction *listeners;
-  unsigned int listener_count;
-} Event, d_Event;
+  Window *window = d_window_create("Ducky Window", 800, 600, true, false);
+  Renderer *renderer = d_renderer_create();
 
-d_Event *d_event_new(void *function) {
-  d_Event *event = malloc(sizeof(d_Event));
-  if (event == NULL) {
-    return NULL;
-  }
-  event->function = function;
-  event->listeners = NULL;
-  event->listener_count = 0;
-  return event;
-}
+  d_throw_error(&DUCKY_WARNING, "This is a test warning.", __FILE__,
+                __FUNCTION__);
 
-void d_event_send(d_Event *event) {
-  if (event == NULL) {
-    return;
-  }
+  bool err_thrown = false;
 
-  event->function();
+  while (window->running) {
+    d_window_update(window);
 
-  for (int i = 0; i < event->listener_count; i++) {
-    EventFunction listener = event->listeners[i];
+    d_window_swap_buffers(window);
 
-    listener();
-  }
-}
-
-void d_event_add_listener(d_Event *event, EventFunction listener) {
-  if (event == NULL || listener == NULL) {
-    return;
-  }
-  EventFunction *temp = malloc(sizeof(EventFunction) * (event->listener_count));
-  memcpy(temp, event->listeners,
-         sizeof(EventFunction) * (event->listener_count));
-  temp = realloc(temp, sizeof(EventFunction) * (event->listener_count + 1));
-
-  if (temp != NULL) {
-    event->listeners = temp;
-    event->listeners[event->listener_count] = listener;
-    event->listener_count++;
-  }
-}
-
-void d_event_remove_listener(d_Event *event, EventFunction listener) {
-  if (event == NULL || listener == NULL) {
-    return;
-  }
-
-  for (int i = 0; i < event->listener_count; i++) {
-    if (event->listeners[i] == listener) {
-      EventFunction target = event->listeners[i];
-      EventFunction last = event->listeners[event->listener_count - 1];
-      event->listeners[event->listener_count - 1] = target;
-      event->listeners[i] = last;
-      EventFunction *temp =
-          malloc(sizeof(EventFunction) * (event->listener_count));
-      memcpy(temp, event->listeners,
-             sizeof(EventFunction) * (event->listener_count));
-      temp = realloc(temp, sizeof(EventFunction) * (event->listener_count - 1));
-      if (temp != NULL) {
-        event->listeners = temp;
-        event->listener_count--;
-      }
-
-      break;
+    if (!err_thrown) {
+      d_throw_error(&DUCKY_FAILURE, "This is a test failure.", __FILE__,
+                    __FUNCTION__);
+      err_thrown = true;
     }
   }
-}
 
-void hello() { printf("Hello, "); }
-void world() { printf("world!\n"); }
-void hi_mum() { printf("Hi, Mum!\n"); }
+  d_renderer_destroy(renderer);
+  d_window_destroy(window);
 
-void main() {
+  d_core_shutdown();
 
-  // Window *window = d_window_create("Ducky Window", 800, 600, true, false);
-  // Renderer *renderer = d_renderer_create();
-
-  // while (window->running) {
-  //   d_window_update(window);
-
-  //   d_window_swap_buffers(window);
-  // }
-
-  // d_window_destroy(window);
-
-  d_DArray *array = d_darray_create(sizeof(int));
-  for (int i = 1; i < 11; i++) {
-    d_darray_add(array, &i);
-  }
-
-  d_darray_remove(array, 4);
-
-  for (int i = 0; i < 20; i++) {
-    int value = *((int *)array->data + i);
-    printf("Value at index %d: %d\n", i, value);
-  }
-
-  d_darray_destroy(array);
+  return 0;
 }

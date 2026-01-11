@@ -185,7 +185,7 @@ void d_shader_activate(d_Shader *shader);
 d_Color d_color(const float r, const float g, const float b, const float a) {
   d_Color color;
   if (r < 0.0f || r > 1.0f) {
-    d_throw_error(DUCKY_WARNING, "Red component out of range (0.0f - 1.0f).",
+    d_throw_error(&DUCKY_WARNING, "Red component out of range (0.0f - 1.0f).",
                   __FILE__, __FUNCTION__);
     color.r = 0.0f;
   } else {
@@ -193,7 +193,7 @@ d_Color d_color(const float r, const float g, const float b, const float a) {
   }
 
   if (g < 0.0f || g > 1.0f) {
-    d_throw_error(DUCKY_WARNING, "Green component out of range (0.0f - 1.0f).",
+    d_throw_error(&DUCKY_WARNING, "Green component out of range (0.0f - 1.0f).",
                   __FILE__, __FUNCTION__);
     color.g = 0.0f;
   } else {
@@ -201,7 +201,7 @@ d_Color d_color(const float r, const float g, const float b, const float a) {
   }
 
   if (b < 0.0f || b > 1.0f) {
-    d_throw_error(DUCKY_WARNING, "Blue component out of range (0.0f - 1.0f).",
+    d_throw_error(&DUCKY_WARNING, "Blue component out of range (0.0f - 1.0f).",
                   __FILE__, __FUNCTION__);
     color.b = 0.0f;
   } else {
@@ -209,7 +209,7 @@ d_Color d_color(const float r, const float g, const float b, const float a) {
   }
 
   if (a < 0.0f || a > 1.0f) {
-    d_throw_error(DUCKY_WARNING, "Alpha component out of range (0.0f - 1.0f).",
+    d_throw_error(&DUCKY_WARNING, "Alpha component out of range (0.0f - 1.0f).",
                   __FILE__, __FUNCTION__);
     color.a = 1.0f;
   } else {
@@ -224,7 +224,7 @@ d_Color d_color(const float r, const float g, const float b, const float a) {
 d_Renderer *d_renderer_create() {
   d_Renderer *renderer = malloc(sizeof(d_Renderer));
   if (renderer == NULL) {
-    d_throw_error(DUCKY_MEMORY_FAILURE, "malloc failed.", __FILE__,
+    d_throw_error(&DUCKY_MEMORY_FAILURE, "malloc failed.", __FILE__,
                   __FUNCTION__);
     return NULL;
   }
@@ -244,7 +244,7 @@ d_Renderer *d_renderer_create() {
 
 void d_renderer_destroy(d_Renderer *renderer) {
   if (renderer == NULL) {
-    d_throw_error(DUCKY_NULL_REFERENCE, "renderer is NULL.", __FILE__,
+    d_throw_error(&DUCKY_NULL_REFERENCE, "renderer is NULL.", __FILE__,
                   __FUNCTION__);
     return;
   }
@@ -256,7 +256,7 @@ void d_renderer_set_max_lights(d_Renderer *renderer,
                                const unsigned int max_point_lights,
                                const unsigned int max_spot_lights) {
   if (renderer == NULL) {
-    d_throw_error(DUCKY_NULL_REFERENCE, "renderer is NULL.", __FILE__,
+    d_throw_error(&DUCKY_NULL_REFERENCE, "renderer is NULL.", __FILE__,
                   __FUNCTION__);
     return;
   }
@@ -268,7 +268,7 @@ void d_renderer_set_max_lights(d_Renderer *renderer,
 
 void d_renderer_set_ambient_color(d_Renderer *renderer, const d_Color color) {
   if (renderer == NULL) {
-    d_throw_error(DUCKY_NULL_REFERENCE, "renderer is NULL.", __FILE__,
+    d_throw_error(&DUCKY_NULL_REFERENCE, "renderer is NULL.", __FILE__,
                   __FUNCTION__);
     return;
   }
@@ -279,7 +279,7 @@ void d_renderer_set_ambient_color(d_Renderer *renderer, const d_Color color) {
 void d_renderer_set_face_culling(d_Renderer *renderer,
                                  const d_FaceCullingType type) {
   if (renderer == NULL) {
-    d_throw_error(DUCKY_NULL_REFERENCE, "renderer is NULL.", __FILE__,
+    d_throw_error(&DUCKY_NULL_REFERENCE, "renderer is NULL.", __FILE__,
                   __FUNCTION__);
     return;
   }
@@ -306,7 +306,7 @@ void d_renderer_set_face_culling(d_Renderer *renderer,
 
 void d_renderer_set_blending(d_Renderer *renderer, bool enabled) {
   if (renderer == NULL) {
-    d_throw_error(DUCKY_NULL_REFERENCE, "renderer is NULL.", __FILE__,
+    d_throw_error(&DUCKY_NULL_REFERENCE, "renderer is NULL.", __FILE__,
                   __FUNCTION__);
     return;
   }
@@ -321,7 +321,7 @@ void d_renderer_set_blending(d_Renderer *renderer, bool enabled) {
 
 void d_renderer_set_depth_testing(d_Renderer *renderer, const bool enabled) {
   if (renderer == NULL) {
-    d_throw_error(DUCKY_NULL_REFERENCE, "renderer is NULL.", __FILE__,
+    d_throw_error(&DUCKY_NULL_REFERENCE, "renderer is NULL.", __FILE__,
                   __FUNCTION__);
     return;
   }
@@ -335,7 +335,7 @@ void d_renderer_set_depth_testing(d_Renderer *renderer, const bool enabled) {
 
 void d_renderer_set_line_smoothing(d_Renderer *renderer, const bool enabled) {
   if (renderer == NULL) {
-    d_throw_error(DUCKY_NULL_REFERENCE, "renderer is NULL.", __FILE__,
+    d_throw_error(&DUCKY_NULL_REFERENCE, "renderer is NULL.", __FILE__,
                   __FUNCTION__);
     return;
   }
@@ -357,7 +357,7 @@ void d_renderer_clear(const d_Color color) {
 d_VAO *d_vao_create() {
   d_VAO *vao = malloc(sizeof(d_VAO));
   if (vao == NULL) {
-    d_throw_error(DUCKY_MEMORY_FAILURE, "malloc failed.", __FILE__,
+    d_throw_error(&DUCKY_MEMORY_FAILURE, "malloc failed.", __FILE__,
                   __FUNCTION__);
     return NULL;
   }
@@ -367,7 +367,8 @@ d_VAO *d_vao_create() {
 
 void d_vao_destroy(d_VAO *vao) {
   if (vao == NULL) {
-    d_throw_error(DUCKY_NULL_REFERENCE, "vao is NULL.", __FILE__, __FUNCTION__);
+    d_throw_error(&DUCKY_NULL_REFERENCE, "vao is NULL.", __FILE__,
+                  __FUNCTION__);
     return;
   }
   glDeleteVertexArrays(1, &vao->id);
@@ -376,7 +377,8 @@ void d_vao_destroy(d_VAO *vao) {
 
 void d_vao_bind(d_VAO *vao) {
   if (vao == NULL) {
-    d_throw_error(DUCKY_NULL_REFERENCE, "vao is NULL.", __FILE__, __FUNCTION__);
+    d_throw_error(&DUCKY_NULL_REFERENCE, "vao is NULL.", __FILE__,
+                  __FUNCTION__);
     return;
   }
   glBindVertexArray(vao->id);
@@ -385,7 +387,8 @@ void d_vao_bind(d_VAO *vao) {
 
 void d_vao_unbind(d_VAO *vao) {
   if (vao == NULL) {
-    d_throw_error(DUCKY_NULL_REFERENCE, "vao is NULL.", __FILE__, __FUNCTION__);
+    d_throw_error(&DUCKY_NULL_REFERENCE, "vao is NULL.", __FILE__,
+                  __FUNCTION__);
     return;
   }
   glBindVertexArray(0);
@@ -397,12 +400,12 @@ void d_vao_link_attrib(const d_VAO *vao, const d_VBO *vbo,
                        const unsigned int type, const unsigned int stride,
                        const void *offset) {
   if (vao == NULL) {
-    d_throw_error(DUCKY_NULL_REFERENCE, "(d_vao_link_attrib) vao is NULL.",
+    d_throw_error(&DUCKY_NULL_REFERENCE, "(d_vao_link_attrib) vao is NULL.",
                   __FILE__, __FUNCTION__);
     return;
   }
   if (vbo == NULL) {
-    d_throw_error(DUCKY_NULL_REFERENCE, "(d_vao_link_attrib) vbo is NULL.",
+    d_throw_error(&DUCKY_NULL_REFERENCE, "(d_vao_link_attrib) vbo is NULL.",
                   __FILE__, __FUNCTION__);
   }
   // bind vbo
@@ -416,7 +419,7 @@ void d_vao_link_attrib(const d_VAO *vao, const d_VBO *vbo,
 d_VBO *d_vbo_create(const float *vertices, const size_t size) {
   d_VBO *vbo = malloc(sizeof(d_VBO));
   if (vbo == NULL) {
-    d_throw_error(DUCKY_MEMORY_FAILURE, "malloc failed.", __FILE__,
+    d_throw_error(&DUCKY_MEMORY_FAILURE, "malloc failed.", __FILE__,
                   __FUNCTION__);
     return NULL;
   }
@@ -428,7 +431,8 @@ d_VBO *d_vbo_create(const float *vertices, const size_t size) {
 
 void d_vbo_destroy(d_VBO *vbo) {
   if (vbo == NULL) {
-    d_throw_error(DUCKY_NULL_REFERENCE, "vbo is NULL.", __FILE__, __FUNCTION__);
+    d_throw_error(&DUCKY_NULL_REFERENCE, "vbo is NULL.", __FILE__,
+                  __FUNCTION__);
     return;
   }
   glDeleteBuffers(1, &vbo->id);
@@ -443,7 +447,7 @@ void d_vbo_unbind(d_VBO *vbo);
 d_EBO *d_ebo_create(const unsigned int *indices, const size_t size) {
   d_EBO *ebo = malloc(sizeof(d_EBO));
   if (ebo == NULL) {
-    d_throw_error(DUCKY_MEMORY_FAILURE, "malloc failed.", __FILE__,
+    d_throw_error(&DUCKY_MEMORY_FAILURE, "malloc failed.", __FILE__,
                   __FUNCTION__);
     return NULL;
   }
@@ -455,7 +459,8 @@ d_EBO *d_ebo_create(const unsigned int *indices, const size_t size) {
 
 void d_ebo_destroy(d_EBO *ebo) {
   if (ebo == NULL) {
-    d_throw_error(DUCKY_NULL_REFERENCE, "ebo is NULL.", __FILE__, __FUNCTION__);
+    d_throw_error(&DUCKY_NULL_REFERENCE, "ebo is NULL.", __FILE__,
+                  __FUNCTION__);
     return;
   }
   glDeleteBuffers(1, &ebo->id);
@@ -464,7 +469,8 @@ void d_ebo_destroy(d_EBO *ebo) {
 
 void d_ebo_bind(d_EBO *ebo) {
   if (ebo == NULL) {
-    d_throw_error(DUCKY_NULL_REFERENCE, "ebo is NULL.", __FILE__, __FUNCTION__);
+    d_throw_error(&DUCKY_NULL_REFERENCE, "ebo is NULL.", __FILE__,
+                  __FUNCTION__);
     return;
   }
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo->id);
@@ -473,7 +479,8 @@ void d_ebo_bind(d_EBO *ebo) {
 
 void d_ebo_unbind(d_EBO *ebo) {
   if (ebo == NULL) {
-    d_throw_error(DUCKY_NULL_REFERENCE, "ebo is NULL.", __FILE__, __FUNCTION__);
+    d_throw_error(&DUCKY_NULL_REFERENCE, "ebo is NULL.", __FILE__,
+                  __FUNCTION__);
     return;
   }
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -486,14 +493,14 @@ void d_ebo_unbind(d_EBO *ebo) {
 d_Shader *d_shader_create(const char *vertex_src, const char *fragment_src) {
   FILE *vertex_file = fopen(vertex_src, "r");
   if (vertex_file == NULL) {
-    d_throw_error(DUCKY_NULL_REFERENCE, "vertex shader file not found.",
+    d_throw_error(&DUCKY_NULL_REFERENCE, "vertex shader file not found.",
                   __FILE__, __FUNCTION__);
     return NULL;
   }
 
   if (fseek(vertex_file, 0, SEEK_END) != 0) {
     fclose(vertex_file);
-    d_throw_error(DUCKY_FAILURE, "fseek failed.", __FILE__, __FUNCTION__);
+    d_throw_error(&DUCKY_FAILURE, "fseek failed.", __FILE__, __FUNCTION__);
     return NULL;
   }
 
@@ -501,7 +508,7 @@ d_Shader *d_shader_create(const char *vertex_src, const char *fragment_src) {
 
   if (vertex_file_size == -1L) {
     fclose(vertex_file);
-    d_throw_error(DUCKY_FAILURE, "ftell failed.", __FILE__, __FUNCTION__);
+    d_throw_error(&DUCKY_FAILURE, "ftell failed.", __FILE__, __FUNCTION__);
     return NULL;
   }
   rewind(vertex_file);
@@ -510,7 +517,7 @@ d_Shader *d_shader_create(const char *vertex_src, const char *fragment_src) {
 
   if (vertex_file_buffer == NULL) {
     fclose(vertex_file);
-    d_throw_error(DUCKY_MEMORY_FAILURE, "malloc failed.", __FILE__,
+    d_throw_error(&DUCKY_MEMORY_FAILURE, "malloc failed.", __FILE__,
                   __FUNCTION__);
     return NULL;
   }
@@ -521,7 +528,7 @@ d_Shader *d_shader_create(const char *vertex_src, const char *fragment_src) {
 
   FILE *fragment_file = fopen(fragment_src, "r");
   if (fragment_file == NULL) {
-    d_throw_error(DUCKY_NULL_REFERENCE, "fragment shader file not found.",
+    d_throw_error(&DUCKY_NULL_REFERENCE, "fragment shader file not found.",
                   __FILE__, __FUNCTION__);
     return NULL;
   }
