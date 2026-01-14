@@ -17,6 +17,12 @@
 #define VERTEX_SHADER_BUFFER_SIZE 1024
 #define FRAGMENT_SHADER_BUFFER_SIZE 1024
 
+#pragma region Debug
+int d_check_shader_compile(GLuint shader, const char *type);
+
+int d_check_shader_link(GLuint shader_id);
+#pragma endregion
+
 #pragma region Types
 
 /**
@@ -84,13 +90,25 @@ d_Color d_color(const float r, const float g, const float b, const float a);
 
 #pragma region Renderer Functions
 /**
- * @brief Creates new renderer.
+ * @brief Creates new renderer with the default settings.
  *
- * @param max_directional_lights Maximum number of directional lights. (default:
- * 1)
- * @param max_point_lights Maximum number of point lights. (default: 8)
- * @param max_spot_lights Maximum number of spot lights. (default: 8)
- * @return d_Renderer*
+ * Defaults:
+ *
+ * `max_directional_lights` `1`
+ *
+ * `max_point_lights` - `8`
+ *
+ * `max_spot_lights` - `8`
+ *
+ * `ambient_color` - `0.1f, 0.1f, 0.1f, 1.0f`
+ *
+ * `face_culling` - `DUCKY_CULL_BACK`
+ *
+ * `depth_testing` - `true`
+ *
+ * `blending` - `true`
+ *
+ * `line_smoothing` - `true`
  */
 d_Renderer *d_renderer_create();
 void d_renderer_destroy(d_Renderer *renderer);
@@ -172,7 +190,7 @@ void d_ebo_unbind(d_EBO *ebo);
 #pragma endregion
 
 #pragma region Shader Functions
-d_Shader *d_shader_create(const char *vertex_file_path,
+d_Shader *d_shader_create(d_Renderer *renderer, const char *vertex_file_path,
                           const char *fragment_file_path);
 void d_shader_destroy(d_Shader *shader);
 void d_shader_activate(d_Shader *shader);
@@ -182,36 +200,70 @@ void d_shader_activate(d_Shader *shader);
 
 #ifdef DUCKY_GFX_IMPL
 
+#pragma region Debug
+int d_check_shader_compile(GLuint shader, const char *type) {
+  GLint success;
+  GLchar info[1024];
+  glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+  if (!success) {
+    glGetShaderInfoLog(shader, 1024, NULL, info);
+    char *message = "(SHADER) compilation failed: ";
+    message = d_str_replace(message, "(SHADER)", type);
+    message = d_str_append(message, info);
+    d_throw_error(DUCKY_SHADER_COMPILE_FAILURE, message);
+    free(message);
+    return -1;
+  }
+  return 0;
+}
+
+int d_check_shader_link(GLuint shader_id) {
+  GLint success;
+  GLchar info[1024];
+  glGetProgramiv(shader_id, GL_LINK_STATUS, &success);
+
+  GLint log_length;
+
+  glGetProgramiv(shader_id, GL_INFO_LOG_LENGTH, &log_length);
+  if (!success) {
+    glGetProgramInfoLog(shader_id, 1024, NULL, info);
+    char *message = d_str_append("Shader program link failed: ", info);
+    d_throw_error(DUCKY_SHADER_PROGRAM_LINK_FAILURE, message);
+    free(message);
+    return -1;
+  }
+
+  return 0;
+}
+
+#pragma endregion
+
 #pragma region Color Functions
 d_Color d_color(const float r, const float g, const float b, const float a) {
   d_Color color;
   if (r < 0.0f || r > 1.0f) {
-    d_throw_error(&DUCKY_WARNING, "Red component out of range (0.0f - 1.0f).",
-                  __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_WARNING, "Red component out of range (0.0f - 1.0f).");
     color.r = 0.0f;
   } else {
     color.r = r;
   }
 
   if (g < 0.0f || g > 1.0f) {
-    d_throw_error(&DUCKY_WARNING, "Green component out of range (0.0f - 1.0f).",
-                  __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_WARNING, "Green component out of range (0.0f - 1.0f).");
     color.g = 0.0f;
   } else {
     color.g = g;
   }
 
   if (b < 0.0f || b > 1.0f) {
-    d_throw_error(&DUCKY_WARNING, "Blue component out of range (0.0f - 1.0f).",
-                  __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_WARNING, "Blue component out of range (0.0f - 1.0f).");
     color.b = 0.0f;
   } else {
     color.b = b;
   }
 
   if (a < 0.0f || a > 1.0f) {
-    d_throw_error(&DUCKY_WARNING, "Alpha component out of range (0.0f - 1.0f).",
-                  __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_WARNING, "Alpha component out of range (0.0f - 1.0f).");
     color.a = 1.0f;
   } else {
     color.a = a;
@@ -225,8 +277,7 @@ d_Color d_color(const float r, const float g, const float b, const float a) {
 d_Renderer *d_renderer_create() {
   d_Renderer *renderer = malloc(sizeof(d_Renderer));
   if (renderer == NULL) {
-    d_throw_error(&DUCKY_MEMORY_FAILURE, "malloc failed.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_MEMORY_FAILURE, "malloc failed.");
     return NULL;
   }
 
@@ -245,8 +296,7 @@ d_Renderer *d_renderer_create() {
 
 void d_renderer_destroy(d_Renderer *renderer) {
   if (renderer == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "renderer is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "renderer is NULL.");
     return;
   }
   free(renderer);
@@ -257,8 +307,7 @@ void d_renderer_set_max_lights(d_Renderer *renderer,
                                const unsigned int max_point_lights,
                                const unsigned int max_spot_lights) {
   if (renderer == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "renderer is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "renderer is NULL.");
     return;
   }
 
@@ -269,8 +318,7 @@ void d_renderer_set_max_lights(d_Renderer *renderer,
 
 void d_renderer_set_ambient_color(d_Renderer *renderer, const d_Color color) {
   if (renderer == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "renderer is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "renderer is NULL.");
     return;
   }
 
@@ -280,8 +328,7 @@ void d_renderer_set_ambient_color(d_Renderer *renderer, const d_Color color) {
 void d_renderer_set_face_culling(d_Renderer *renderer,
                                  const d_FaceCullingType type) {
   if (renderer == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "renderer is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "renderer is NULL.");
     return;
   }
 
@@ -307,8 +354,7 @@ void d_renderer_set_face_culling(d_Renderer *renderer,
 
 void d_renderer_set_blending(d_Renderer *renderer, bool enabled) {
   if (renderer == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "renderer is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "renderer is NULL.");
     return;
   }
   renderer->blending = enabled;
@@ -322,8 +368,7 @@ void d_renderer_set_blending(d_Renderer *renderer, bool enabled) {
 
 void d_renderer_set_depth_testing(d_Renderer *renderer, const bool enabled) {
   if (renderer == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "renderer is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "renderer is NULL.");
     return;
   }
   renderer->depth_testing = enabled;
@@ -336,8 +381,7 @@ void d_renderer_set_depth_testing(d_Renderer *renderer, const bool enabled) {
 
 void d_renderer_set_line_smoothing(d_Renderer *renderer, const bool enabled) {
   if (renderer == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "renderer is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "renderer is NULL.");
     return;
   }
   renderer->line_smoothing = enabled;
@@ -358,8 +402,7 @@ void d_renderer_clear(const d_Color color) {
 d_VAO *d_vao_create() {
   d_VAO *vao = malloc(sizeof(d_VAO));
   if (vao == NULL) {
-    d_throw_error(&DUCKY_MEMORY_FAILURE, "malloc failed.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_MEMORY_FAILURE, "malloc failed.");
     return NULL;
   }
   glGenVertexArrays(1, &vao->id);
@@ -368,8 +411,7 @@ d_VAO *d_vao_create() {
 
 void d_vao_destroy(d_VAO *vao) {
   if (vao == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "vao is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "vao is NULL.");
     return;
   }
   glDeleteVertexArrays(1, &vao->id);
@@ -378,8 +420,7 @@ void d_vao_destroy(d_VAO *vao) {
 
 void d_vao_bind(d_VAO *vao) {
   if (vao == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "vao is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "vao is NULL.");
     return;
   }
   glBindVertexArray(vao->id);
@@ -388,8 +429,7 @@ void d_vao_bind(d_VAO *vao) {
 
 void d_vao_unbind(d_VAO *vao) {
   if (vao == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "vao is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "vao is NULL.");
     return;
   }
   glBindVertexArray(0);
@@ -401,13 +441,11 @@ void d_vao_link_attrib(const d_VAO *vao, const d_VBO *vbo,
                        const unsigned int type, const unsigned int stride,
                        const void *offset) {
   if (vao == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "(d_vao_link_attrib) vao is NULL.",
-                  __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "(d_vao_link_attrib) vao is NULL.");
     return;
   }
   if (vbo == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "(d_vao_link_attrib) vbo is NULL.",
-                  __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "(d_vao_link_attrib) vbo is NULL.");
   }
   // bind vbo
   glVertexAttribPointer(layout, size, type, GL_FALSE, stride, offset);
@@ -420,8 +458,7 @@ void d_vao_link_attrib(const d_VAO *vao, const d_VBO *vbo,
 d_VBO *d_vbo_create(const float *vertices, const size_t size) {
   d_VBO *vbo = malloc(sizeof(d_VBO));
   if (vbo == NULL) {
-    d_throw_error(&DUCKY_MEMORY_FAILURE, "malloc failed.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_MEMORY_FAILURE, "malloc failed.");
     return NULL;
   }
   glGenBuffers(1, &vbo->id);
@@ -432,8 +469,7 @@ d_VBO *d_vbo_create(const float *vertices, const size_t size) {
 
 void d_vbo_destroy(d_VBO *vbo) {
   if (vbo == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "vbo is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "vbo is NULL.");
     return;
   }
   glDeleteBuffers(1, &vbo->id);
@@ -448,8 +484,7 @@ void d_vbo_unbind(d_VBO *vbo);
 d_EBO *d_ebo_create(const unsigned int *indices, const size_t size) {
   d_EBO *ebo = malloc(sizeof(d_EBO));
   if (ebo == NULL) {
-    d_throw_error(&DUCKY_MEMORY_FAILURE, "malloc failed.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_MEMORY_FAILURE, "malloc failed.");
     return NULL;
   }
   glGenBuffers(1, &ebo->id);
@@ -460,8 +495,7 @@ d_EBO *d_ebo_create(const unsigned int *indices, const size_t size) {
 
 void d_ebo_destroy(d_EBO *ebo) {
   if (ebo == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "ebo is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "ebo is NULL.");
     return;
   }
   glDeleteBuffers(1, &ebo->id);
@@ -470,8 +504,7 @@ void d_ebo_destroy(d_EBO *ebo) {
 
 void d_ebo_bind(d_EBO *ebo) {
   if (ebo == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "ebo is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "ebo is NULL.");
     return;
   }
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo->id);
@@ -480,8 +513,7 @@ void d_ebo_bind(d_EBO *ebo) {
 
 void d_ebo_unbind(d_EBO *ebo) {
   if (ebo == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "ebo is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "ebo is NULL.");
     return;
   }
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -491,35 +523,83 @@ void d_ebo_unbind(d_EBO *ebo) {
 #pragma endregion
 
 #pragma region Shader Functions
-d_Shader *d_shader_create(const char *vertex_file_path,
+d_Shader *d_shader_create(d_Renderer *renderer, const char *vertex_file_path,
                           const char *fragment_file_path) {
   d_Shader *shader = malloc(sizeof(d_Shader));
 
   if (shader == NULL) {
-    d_throw_error(&DUCKY_MEMORY_FAILURE, "malloc failed.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_MEMORY_FAILURE, "malloc failed.");
     return NULL;
   }
 
-  d_File *vertex_file = d_file_read(vertex_file_path);
-  if (vertex_file == NULL) {
-    d_throw_error(&DUCKY_FAILURE, "Failed to read vertex shader file.",
-                  __FILE__, __FUNCTION__);
+  d_File *fragment_shader = d_file_read(fragment_file_path);
+  if (fragment_shader == NULL) {
+    d_throw_error(DUCKY_FAILURE, "Failed to read fragment shader.");
+
+    d_core_shutdown();
+  }
+
+  d_File *vertex_shader = d_file_read(vertex_file_path);
+  if (vertex_shader == NULL) {
+    d_throw_error(DUCKY_FAILURE, "Failed to read vertex shader.");
+
+    d_core_shutdown();
+  }
+
+  char *number = malloc(sizeof(char) * 4);
+
+  sprintf(number, "%d", renderer->max_point_lights);
+  char *res = d_str_append("#define MAX_POINT_LIGHTS ", number);
+  fragment_shader->data =
+      d_str_replace(fragment_shader->data, "#define MAX_POINT_LIGHTS 8", res);
+
+  sprintf(number, "%d", renderer->max_spot_lights);
+  res = d_str_append("#define MAX_SPOT_LIGHTS ", number);
+  fragment_shader->data =
+      d_str_replace(fragment_shader->data, "#define MAX_SPOT_LIGHTS 8", res);
+
+  sprintf(number, "%d", renderer->max_directional_lights);
+  res = d_str_append("#define MAX_DIRECTIONAL_LIGHTS ", number);
+  fragment_shader->data = d_str_replace(
+      fragment_shader->data, "#define MAX_DIRECTIONAL_LIGHTS 1", res);
+
+  free(number);
+  free(res);
+
+  GLuint vert = glCreateShader(GL_VERTEX_SHADER);
+  glShaderSource(vert, 1, (const char *const *)vertex_shader->data, NULL);
+  glCompileShader(vert);
+  if (d_check_shader_compile(vert, "VERTEX_SHADER") == -1) {
+    d_throw_error(DUCKY_FAILURE, "Failed to compile vertex shader.");
     free(shader);
+    d_file_destroy(vertex_shader);
+    d_file_destroy(fragment_shader);
     return NULL;
   }
 
-  d_File *fragment_file = d_file_read(fragment_file_path);
-  if (fragment_file == NULL) {
-    d_throw_error(&DUCKY_FAILURE, "Failed to read fragment shader file.",
-                  __FILE__, __FUNCTION__);
+  GLuint frag = glCreateShader(GL_FRAGMENT_SHADER);
+  glShaderSource(frag, 1, (const char *const *)fragment_shader->data, NULL);
+  glCompileShader(frag);
+  if (d_check_shader_compile(frag, "FRAGMENT_SHADER") == -1) {
+    d_throw_error(DUCKY_FAILURE, "Failed to compile fragment shader.");
     free(shader);
-    d_file_destroy(vertex_file);
+    d_file_destroy(vertex_shader);
+    d_file_destroy(fragment_shader);
     return NULL;
   }
+  d_file_destroy(vertex_shader);
+  d_file_destroy(fragment_shader);
 
-  d_file_destroy(vertex_file);
-  d_file_destroy(fragment_file);
+  shader->id = glCreateProgram();
+
+  glAttachShader(shader->id, vert);
+  glAttachShader(shader->id, frag);
+  glLinkProgram(shader->id);
+  if (d_check_shader_link(shader->id) == -1) {
+    d_throw_error(DUCKY_FAILURE, "Failed to link shader program.");
+    free(shader);
+  }
+
   return shader;
 }
 void d_shader_destroy(d_Shader *shader) {}

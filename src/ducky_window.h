@@ -115,6 +115,8 @@ void d_window_get_dimensions(d_Window *window, int *width, int *height);
 */
 void d_window_swap_buffers(d_Window *window);
 
+bool d_window_running(d_Window *window);
+
 void d_window_popup(d_WindowPopupType type, const char *title,
                     const char *message);
 void d_window_popup_error();
@@ -135,8 +137,7 @@ void d_viewport_destroy(d_Viewport *viewport) {
   if (viewport != NULL) {
     free(viewport);
   } else {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "viewport is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "viewport is NULL.");
   }
 }
 
@@ -146,7 +147,7 @@ d_Window *d_window_create(const char *title, const int width, const int height,
   if (SDL_Init(SDL_INIT_VIDEO) == false) {
     char message[256] = "Failed to initialize SDL: ";
     strcat(message, SDL_GetError());
-    d_throw_error(&DUCKY_CRITICAL, message, __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_CRITICAL, message);
     return NULL;
   }
 
@@ -164,7 +165,7 @@ d_Window *d_window_create(const char *title, const int width, const int height,
     char message[256] = "Failed to create SDL window: ";
     strcat(message, SDL_GetError());
     SDL_Quit();
-    d_throw_error(&DUCKY_CRITICAL, message, __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_CRITICAL, message);
     return NULL;
   }
   SDL_ShowWindow(sdl_window);
@@ -182,7 +183,7 @@ d_Window *d_window_create(const char *title, const int width, const int height,
     SDL_DestroyWindow(sdl_window);
     SDL_Quit();
 
-    d_throw_error(&DUCKY_CRITICAL, message, __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_CRITICAL, message);
 
     return NULL;
   }
@@ -191,8 +192,7 @@ d_Window *d_window_create(const char *title, const int width, const int height,
   if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) {
     SDL_DestroyWindow(sdl_window);
     SDL_Quit();
-    d_throw_error(&DUCKY_CRITICAL, "Failed to initialize GLAD", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_CRITICAL, "Failed to initialize GLAD");
     SDL_GL_DestroyContext(gl_context);
 
     return NULL;
@@ -219,8 +219,7 @@ d_Window *d_window_create(const char *title, const int width, const int height,
 
 void d_window_destroy(d_Window *window) {
   if (window == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "window is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "window is NULL.");
     return;
   }
 
@@ -232,8 +231,7 @@ void d_window_destroy(d_Window *window) {
 
 void d_window_update(d_Window *window) {
   if (window == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "window is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "window is NULL.");
     return;
   }
 
@@ -274,8 +272,7 @@ void d_window_update(d_Window *window) {
 
 void d_window_get_dimensions(d_Window *window, int *width, int *height) {
   if (window == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "window is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "window is NULL.");
     return;
   }
 
@@ -284,12 +281,19 @@ void d_window_get_dimensions(d_Window *window, int *width, int *height) {
 
 void d_window_swap_buffers(d_Window *window) {
   if (window == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "window is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "window is NULL.");
     return;
   }
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   SDL_GL_SwapWindow((SDL_Window *)window->native_window);
+}
+
+bool d_window_running(d_Window *window) {
+  if (window == NULL) {
+    d_throw_error(DUCKY_NULL_REFERENCE, "window is NULL.");
+    return false;
+  }
+  return window->running;
 }
 
 void d_window_popup(d_WindowPopupType type, const char *title,

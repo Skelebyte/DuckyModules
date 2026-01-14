@@ -22,10 +22,11 @@ void d_core_shutdown();
   - `10`-`19`:  Generic errors
   - `20`-`29`:  Memory errors
   - `30`-`39`:  File errors
-  - `40`-`49`:  Graphics errors
+
   - `50`-`59`:  Audio errors
   - `60`-`69`:  Input errors
   - `70`-`79`:  Window errors
+  - `80`-`89`:  Graphics/OpenGL errors
   - `90`-`99`:  Critical errors
 
 */
@@ -46,14 +47,21 @@ const d_Error DUCKY_SUCCESS;
 const d_Error DUCKY_FAILURE;
 const d_Error DUCKY_WARNING;
 const d_Error DUCKY_NULL_REFERENCE;
+const d_Error DUCKY_EMPTY_REFERENCE;
+const d_Error DUCKY_INDEX_OUT_OF_BOUNDS;
 const d_Error DUCKY_MEMORY_FAILURE;
 const d_Error DUCKY_SDL_INIT_FAILURE;
 const d_Error DUCKY_WINDOW_CREATION_FAILURE;
+const d_Error DUCKY_SHADER_COMPILE_FAILURE;
+const d_Error DUCKY_SHADER_PROGRAM_LINK_FAILURE;
 d_FullError *d_last_error;
 #pragma endregion
 
-void d_throw_error(const d_Error *error, const char *message, const char *file,
-                   const char *function);
+void d_throw_error_internal(const d_Error *error, const char *message,
+                            const char *file, const char *function);
+
+#define d_throw_error(error, message)                                          \
+  d_throw_error_internal(&error, message, __FILE__, __FUNCTION__)
 
 #pragma endregion
 
@@ -127,16 +135,23 @@ void d_file_save(d_File *file);
 #pragma region Utilities
 
 /**
- * @brief Finds the first occurrence of target character in the given string.
+ * @brief Finds the first occurrence of target substring in the given string.
  *
  * @param str string to search.
- * @param target target string to find.
+ * @param target target substring to find.
  * @param index_offset offset to add to the returned index. `0` if finding from
  * the start of the string.
  * @return The position of the first character of `target` in the string, and
  * `-1` and no match was found.
+ * @throws DUCKY_NULL_REFERENCE if `str` or `target` is NULL.
+ * @throws DUCKY_EMPTY_REFERENCE if `str` or `target` is an empty string.
+ *
  */
 int d_str_find(const char *str, const char *target, unsigned int index_offset);
+
+char *d_str_replace(char *str, const char *target, const char *replacement);
+
+char *d_str_append(const char *destination, const char *target);
 
 #pragma endregion
 
@@ -149,16 +164,22 @@ const d_Error DUCKY_SUCCESS = {0, "DUCKY_SUCCESS"};
 const d_Error DUCKY_FAILURE = {10, "DUCKY_FAILURE"};
 const d_Error DUCKY_WARNING = {11, "DUCKY_WARNING"};
 const d_Error DUCKY_NULL_REFERENCE = {12, "DUCKY_NULL_REFERENCE"};
+const d_Error DUCKY_EMPTY_REFERENCE = {13, "DUCKY_EMPTY_REFERENCE"};
+const d_Error DUCKY_INDEX_OUT_OF_BOUNDS = {14, "DUCKY_INDEX_OUT_OF_BOUNDS"};
 const d_Error DUCKY_MEMORY_FAILURE = {20, "DUCKY_MEMORY_FAILURE"};
 const d_Error DUCKY_SDL_INIT_FAILURE = {70, "DUCKY_SDL_INIT_FAILURE"};
 const d_Error DUCKY_WINDOW_CREATION_FAILURE = {71,
                                                "DUCKY_WINDOW_CREATION_FAILURE"};
+const d_Error DUCKY_SHADER_COMPILE_FAILURE = {81,
+                                              "DUCKY_SHADER_COMPILE_FAILURE"};
+const d_Error DUCKY_SHADER_PROGRAM_LINK_FAILURE = {
+    82, "DUCKY_SHADER_PROGRAM_LINK_FAILURE"};
 const d_Error DUCKY_CRITICAL = {90, "DUCKY_CRITICAL"};
 
 d_FullError *d_last_error = NULL;
 
-void d_throw_error(const d_Error *error, const char *message, const char *file,
-                   const char *function) {
+void d_throw_error_internal(const d_Error *error, const char *message,
+                            const char *file, const char *function) {
   d_last_error->error = error;
   d_last_error->message = message;
   d_last_error->file = file;
@@ -181,17 +202,15 @@ void d_throw_error(const d_Error *error, const char *message, const char *file,
 d_Array *d_array_create_internal(size_t element_size, size_t initial_capacity) {
   d_Array *array = malloc(sizeof(d_Array));
   if (array == NULL) {
-    d_throw_error(&DUCKY_MEMORY_FAILURE, "Failed to allocate memory for array.",
-                  __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_MEMORY_FAILURE, "Failed to allocate memory for array.");
     return NULL;
   }
 
   array->data = malloc(element_size * initial_capacity);
   if (array->data == NULL) {
     free(array);
-    d_throw_error(&DUCKY_MEMORY_FAILURE,
-                  "Failed to allocate memory for array data.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_MEMORY_FAILURE,
+                  "Failed to allocate memory for array data.");
     return NULL;
   }
 
@@ -204,8 +223,7 @@ d_Array *d_array_create_internal(size_t element_size, size_t initial_capacity) {
 
 void d_array_add(d_Array *array, void *element) {
   if (array == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "array is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "array is NULL.");
     return;
   }
 
@@ -213,9 +231,8 @@ void d_array_add(d_Array *array, void *element) {
     size_t new_capacity = array->capacity * 2;
     void *new_data = realloc(array->data, array->element_size * new_capacity);
     if (new_data == NULL) {
-      d_throw_error(&DUCKY_MEMORY_FAILURE,
-                    "Failed to reallocate memory for array data.", __FILE__,
-                    __FUNCTION__);
+      d_throw_error(DUCKY_MEMORY_FAILURE,
+                    "Failed to reallocate memory for array data.");
       return;
     }
     array->data = new_data;
@@ -229,14 +246,12 @@ void d_array_add(d_Array *array, void *element) {
 
 void *d_array_get_internal(d_Array *array, unsigned int index) {
   if (array == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "array is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "array is NULL.");
     return NULL;
   }
 
   if (index >= array->length) {
-    d_throw_error(&DUCKY_FAILURE, "Index out of bounds.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_FAILURE, "Index out of bounds.");
     return NULL;
   }
 
@@ -250,8 +265,7 @@ void d_array_destroy(d_Array *array) {
     }
     free(array);
   } else {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "array is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "array is NULL.");
   }
 }
 
@@ -263,8 +277,7 @@ d_EventSystem *d_event_system = NULL;
 d_Event *d_event_create(const char *name) {
   d_Event *event = malloc(sizeof(d_Event));
   if (event == NULL) {
-    d_throw_error(&DUCKY_MEMORY_FAILURE, "Failed to allocate memory for event.",
-                  __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_MEMORY_FAILURE, "Failed to allocate memory for event.");
     return NULL;
   }
 
@@ -283,21 +296,18 @@ void d_event_destroy(d_Event *event) {
     d_array_destroy(event->listeners);
     free(event);
   } else {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "event is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "event is NULL.");
   }
 }
 
 void d_event_add_listener(d_Event *event, d_EventListener listener) {
   if (event == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "event is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "event is NULL.");
     return;
   }
 
   if (listener == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "listener is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "listener is NULL.");
     return;
   } else {
     d_array_add(event->listeners, &listener);
@@ -306,8 +316,7 @@ void d_event_add_listener(d_Event *event, d_EventListener listener) {
 
 void d_event_invoke(d_Event *event) {
   if (event == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "event is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "event is NULL.");
     return;
   }
 
@@ -323,9 +332,8 @@ void d_event_invoke(d_Event *event) {
 d_EventSystem *d_event_system_create() {
   d_EventSystem *event_system = malloc(sizeof(d_EventSystem));
   if (event_system == NULL) {
-    d_throw_error(&DUCKY_CRITICAL,
-                  "Failed to allocate memory for event system.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_CRITICAL,
+                  "Failed to allocate memory for event system.");
     return NULL;
   }
 
@@ -347,16 +355,14 @@ void d_event_system_destroy(d_EventSystem *event_system) {
     d_array_destroy(event_system->events);
     free(event_system);
   } else {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "event_system is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "event_system is NULL.");
   }
 }
 
 d_Event *d_event_system_get_event(d_EventSystem *event_system,
                                   const char *name) {
   if (event_system == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "event_system is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "event_system is NULL.");
     return NULL;
   }
 
@@ -372,22 +378,19 @@ d_Event *d_event_system_get_event(d_EventSystem *event_system,
 
 void d_event_system_add_event(d_EventSystem *event_system, const char *name) {
   if (event_system == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "event_system is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "event_system is NULL.");
     return;
   }
 
   d_Event *existing_event = d_event_system_get_event(event_system, name);
   if (existing_event != NULL) {
-    d_throw_error(&DUCKY_WARNING, "Event with the same name already exists.",
-                  __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_WARNING, "Event with the same name already exists.");
     return;
   }
 
   d_Event *new_event = d_event_create(name);
   if (new_event == NULL) {
-    d_throw_error(&DUCKY_FAILURE, "Failed to create event.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_FAILURE, "Failed to create event.");
     return;
   }
 
@@ -398,13 +401,15 @@ void d_event_system_add_event(d_EventSystem *event_system, const char *name) {
 
 #pragma region Core
 void d_core_init() {
-  d_event_system = d_event_system_create();
-  if (d_event_system == NULL) {
-    d_throw_error(&DUCKY_CRITICAL, "Failed to create event system.", __FILE__,
-                  __FUNCTION__);
+  d_last_error = malloc(sizeof(d_FullError));
+  if (d_last_error == NULL) {
+    // throw critical with no window
   }
 
-  d_last_error = malloc(sizeof(d_FullError));
+  d_event_system = d_event_system_create();
+  if (d_event_system == NULL) {
+    d_throw_error(DUCKY_CRITICAL, "Failed to create event system.");
+  }
 
   d_event_system_add_event(d_event_system, "on_throw_error");
 }
@@ -420,8 +425,7 @@ void d_core_shutdown() {
 d_File *d_file_read(const char *path) {
   FILE *file = fopen(path, "rb");
   if (file == NULL) {
-    d_throw_error(&DUCKY_FAILURE, "Failed to open file.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_FAILURE, "Failed to open file.");
     return NULL;
   }
 
@@ -432,8 +436,7 @@ d_File *d_file_read(const char *path) {
   char *buffer = malloc(length + 1);
   if (buffer == NULL) {
     fclose(file);
-    d_throw_error(&DUCKY_MEMORY_FAILURE, "Failed to allocate memory for file.",
-                  __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_MEMORY_FAILURE, "Failed to allocate memory for file.");
     return NULL;
   }
 
@@ -445,9 +448,8 @@ d_File *d_file_read(const char *path) {
   d_File *d_file = malloc(sizeof(d_File));
   if (d_file == NULL) {
     free(buffer);
-    d_throw_error(&DUCKY_MEMORY_FAILURE,
-                  "Failed to allocate memory for d_File.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_MEMORY_FAILURE,
+                  "Failed to allocate memory for d_File.");
     return NULL;
   }
 
@@ -463,24 +465,21 @@ void d_file_destroy(d_File *file) {
     }
     free(file);
   } else {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "file is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "file is NULL.");
   }
 }
 
 void d_file_edit(d_File *file, const char *data) {
   if (file == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "file is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "file is NULL.");
     return;
   }
 
   size_t data_length = strlen(data);
   file->data = realloc(file->data, data_length + 1);
   if (file->data == NULL) {
-    d_throw_error(&DUCKY_MEMORY_FAILURE,
-                  "Failed to allocate memory for file data.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_MEMORY_FAILURE,
+                  "Failed to allocate memory for file data.");
     return;
   }
 
@@ -496,27 +495,47 @@ void d_file_edit(d_File *file, const char *data) {
 // amount is equal to the length of the target, break.
 int d_str_find(const char *str, const char *target, unsigned int index_offset) {
   if (str == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "str is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "str is NULL.");
+    return -1;
+  }
+
+  if (str[0] == '\0') {
+    d_throw_error(DUCKY_EMPTY_REFERENCE, "str is empty.");
+    return -1;
+  }
+
+  if (target == NULL) {
+    d_throw_error(DUCKY_NULL_REFERENCE, "target is NULL.");
+    return -1;
+  }
+
+  if (target[0] == '\0') {
+    d_throw_error(DUCKY_EMPTY_REFERENCE, "target is empty.");
+    return -1;
+  }
+
+  size_t str_length = strlen(str);
+  size_t target_length = strlen(target);
+
+  if (index_offset >= str_length) {
+    d_throw_error(DUCKY_INDEX_OUT_OF_BOUNDS, "index_offset is out of bounds.");
     return -1;
   }
 
   bool matches = false;
   int match_position = -1;
-  int match_amount = 0;
 
-  for (size_t i = index_offset; i < strlen(str); i++) {
+  for (int i = index_offset; i < str_length; i++) {
     if (str[i] == target[0]) {
-      for (int j = 0; j < strlen(target) + 1; j++) {
-        if (match_amount == (int)strlen(target)) {
+      for (int j = 0; j < target_length; j++) {
+        if (i + j > str_length) {
+          matches = false;
           break;
         }
         if (str[i + j] == target[j]) {
           matches = true;
-          match_amount++;
         } else {
           matches = false;
-          match_amount = 0;
           break;
         }
       }
@@ -530,6 +549,88 @@ int d_str_find(const char *str, const char *target, unsigned int index_offset) {
   }
 
   return match_position;
+}
+
+char *d_str_replace(char *str, const char *target, const char *replacement) {
+  if (str == NULL) {
+    d_throw_error(DUCKY_NULL_REFERENCE, "str is NULL");
+    return NULL;
+  }
+
+  if (target == NULL) {
+    d_throw_error(DUCKY_NULL_REFERENCE, "target is NULL");
+    return NULL;
+  }
+
+  if (replacement == NULL) {
+    d_throw_error(DUCKY_NULL_REFERENCE, "replacement is NULL");
+    return NULL;
+  }
+
+  size_t str_length = strlen(str);
+  size_t target_length = strlen(target);
+  size_t replacement_length = strlen(replacement);
+
+  size_t new_length = str_length - target_length + replacement_length;
+
+  int target_start = d_str_find(str, target, 0);
+  if (target_start == -1) {
+    return NULL;
+  }
+
+  char *new_str = malloc((new_length + 1) * sizeof(char));
+  if (new_str == NULL) {
+    d_throw_error(DUCKY_MEMORY_FAILURE, "Failed to malloc new_str.");
+    return NULL;
+  }
+
+  strcpy(new_str, str);
+
+  for (int i = target_start; i < new_length; i++) {
+    if (i >= target_start + replacement_length) {
+      if (i - (replacement_length - target_length) > str_length) {
+        d_throw_error(DUCKY_INDEX_OUT_OF_BOUNDS, "");
+      }
+      new_str[i] = str[i - (replacement_length - target_length)];
+      continue;
+    }
+
+    new_str[i] = replacement[i - target_start];
+  }
+
+  new_str[new_length] = '\0';
+  return new_str;
+}
+
+char *d_str_append(const char *destination, const char *target) {
+  if (destination == NULL) {
+    d_throw_error(DUCKY_NULL_REFERENCE, "destination is NULL.");
+    return NULL;
+  }
+
+  if (target == NULL) {
+    d_throw_error(DUCKY_NULL_REFERENCE, "target is NULL.");
+    return NULL;
+  }
+
+  size_t destination_length = strlen(destination);
+  size_t target_length = strlen(target);
+  size_t new_length = destination_length + target_length;
+
+  char *new_str = malloc((new_length + 1) * sizeof(char));
+  if (new_str == NULL) {
+    d_throw_error(DUCKY_MEMORY_FAILURE, "Failed to malloc new_str.");
+    return NULL;
+  }
+
+  strcpy(new_str, destination);
+
+  for (int i = destination_length; i < new_length; i++) {
+    new_str[i] = target[i - destination_length];
+  }
+
+  new_str[new_length] = '\0';
+  return new_str;
 }
 
 #pragma endregion

@@ -152,11 +152,11 @@ d_Vec3 d_vec3(const float x, const float y, const float z) {
 
 d_Vec3 d_vec3_add(const d_Vec3 *a, const d_Vec3 *b) {
   if (a == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "a is NULL", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL");
     return d_vec3(0.0f, 0.0f, 0.0f);
   }
   if (b == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "b is NULL", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "b is NULL");
     return d_vec3(0.0f, 0.0f, 0.0f);
   }
 
@@ -169,11 +169,11 @@ d_Vec3 d_vec3_add(const d_Vec3 *a, const d_Vec3 *b) {
 
 d_Vec3 d_vec3_sub(const d_Vec3 *a, const d_Vec3 *b) {
   if (a == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "a is NULL", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL");
     return d_vec3(0.0f, 0.0f, 0.0f);
   }
   if (b == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "b is NULL", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "b is NULL");
     return d_vec3(0.0f, 0.0f, 0.0f);
   }
 
@@ -186,11 +186,11 @@ d_Vec3 d_vec3_sub(const d_Vec3 *a, const d_Vec3 *b) {
 
 float d_vec3_dot(const d_Vec3 *a, const d_Vec3 *b) {
   if (a == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "a is NULL", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL");
     return 0.0f;
   }
   if (b == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "b is NULL", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "b is NULL");
     return 0.0f;
   }
 
@@ -199,7 +199,7 @@ float d_vec3_dot(const d_Vec3 *a, const d_Vec3 *b) {
 
 float d_vec3_len(const d_Vec3 *a) {
   if (a == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "a is NULL", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL");
     return 0.0f;
   }
 
@@ -208,14 +208,13 @@ float d_vec3_len(const d_Vec3 *a) {
 
 d_Vec3 d_vec3_normalized(const d_Vec3 *a) {
   if (a == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "a is NULL.", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL.");
     return d_vec3(0.0f, 0.0f, 0.0f);
   }
 
   float len = d_vec3_len(a);
   if (len == 0) {
-    d_throw_error(&DUCKY_FAILURE, "Cannot normalize zero-length vector",
-                  __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_FAILURE, "Cannot normalize zero-length vector");
     return *a;
   }
   d_Vec3 result;
@@ -227,11 +226,11 @@ d_Vec3 d_vec3_normalized(const d_Vec3 *a) {
 
 d_Vec3 d_vec3_cross(const d_Vec3 *a, const d_Vec3 *b) {
   if (a == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "a is NULL", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL");
     return d_vec3(0.0f, 0.0f, 0.0f);
   }
   if (b == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "b is NULL", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "b is NULL");
     return d_vec3(0.0f, 0.0f, 0.0f);
   }
 
@@ -251,11 +250,11 @@ d_Vec3i d_vec3i(const int x, const int y, const int z) {
 
 d_Vec3i d_vec3i_add(const d_Vec3i *a, const d_Vec3i *b) {
   if (a == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "a is NULL", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL");
     return d_vec3i(0, 0, 0);
   }
   if (b == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "b is NULL", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "b is NULL");
     return d_vec3i(0, 0, 0);
   }
 
@@ -268,11 +267,11 @@ d_Vec3i d_vec3i_add(const d_Vec3i *a, const d_Vec3i *b) {
 
 d_Vec3i d_vec3i_sub(const d_Vec3i *a, const d_Vec3i *b) {
   if (a == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "a is NULL", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL");
     return d_vec3i(0, 0, 0);
   }
   if (b == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "b is NULL", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "b is NULL");
     return d_vec3i(0, 0, 0);
   }
 
@@ -285,11 +284,11 @@ d_Vec3i d_vec3i_sub(const d_Vec3i *a, const d_Vec3i *b) {
 
 float d_vec3i_dot(const d_Vec3i *a, const d_Vec3i *b) {
   if (a == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "a is NULL", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL");
     return 0.0f;
   }
   if (b == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "b is NULL", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "b is NULL");
     return 0.0f;
   }
 
@@ -298,7 +297,7 @@ float d_vec3i_dot(const d_Vec3i *a, const d_Vec3i *b) {
 
 float d_vec3i_len(const d_Vec3i *a) {
   if (a == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "a is NULL", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL");
     return 0.0f;
   }
 
@@ -316,11 +315,11 @@ d_Vec2 d_vec2(const float x, const float y) {
 
 d_Vec2 d_vec2_add(const d_Vec2 *a, const d_Vec2 *b) {
   if (a == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "a is NULL", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL");
     return d_vec2(0.0f, 0.0f);
   }
   if (b == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "b is NULL", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "b is NULL");
     return d_vec2(0.0f, 0.0f);
   }
 
@@ -332,11 +331,11 @@ d_Vec2 d_vec2_add(const d_Vec2 *a, const d_Vec2 *b) {
 
 d_Vec2 d_vec2_sub(const d_Vec2 *a, const d_Vec2 *b) {
   if (a == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "a is NULL", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL");
     return d_vec2(0.0f, 0.0f);
   }
   if (b == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "b is NULL", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "b is NULL");
     return d_vec2(0.0f, 0.0f);
   }
 
@@ -348,11 +347,11 @@ d_Vec2 d_vec2_sub(const d_Vec2 *a, const d_Vec2 *b) {
 
 float d_vec2_dot(const d_Vec2 *a, const d_Vec2 *b) {
   if (a == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "a is NULL", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL");
     return 0.0f;
   }
   if (b == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "b is NULL", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "b is NULL");
     return 0.0f;
   }
 
@@ -361,7 +360,7 @@ float d_vec2_dot(const d_Vec2 *a, const d_Vec2 *b) {
 
 float d_vec2_len(const d_Vec2 *a) {
   if (a == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "a is NULL", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL");
     return 0.0f;
   }
   return sqrt(pow(a->x, 2) + pow(a->y, 2));
@@ -369,14 +368,13 @@ float d_vec2_len(const d_Vec2 *a) {
 
 d_Vec2 d_vec2_normalized(const d_Vec2 *a) {
   if (a == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "a is NULL.", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL.");
     return d_vec2(0.0f, 0.0f);
   }
 
   float len = d_vec2_len(a);
   if (len == 0) {
-    d_throw_error(&DUCKY_FAILURE, "Cannot normalize zero-length vector",
-                  __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_FAILURE, "Cannot normalize zero-length vector");
     return *a;
   }
   d_Vec2 result;
@@ -396,11 +394,11 @@ d_Vec2i d_vec2i(const int x, const int y) {
 
 d_Vec2i d_vec2i_add(const d_Vec2i *a, const d_Vec2i *b) {
   if (a == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "a is NULL.", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL.");
     return d_vec2i(0, 0);
   }
   if (b == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "b is NULL.", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "b is NULL.");
     return d_vec2i(0, 0);
   }
 
@@ -412,11 +410,11 @@ d_Vec2i d_vec2i_add(const d_Vec2i *a, const d_Vec2i *b) {
 
 d_Vec2i d_vec2i_sub(const d_Vec2i *a, const d_Vec2i *b) {
   if (a == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "a is NULL.", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL.");
     return d_vec2i(0, 0);
   }
   if (b == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "b is NULL.", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "b is NULL.");
     return d_vec2i(0, 0);
   }
 
@@ -428,11 +426,11 @@ d_Vec2i d_vec2i_sub(const d_Vec2i *a, const d_Vec2i *b) {
 
 float d_vec2i_dot(const d_Vec2i *a, const d_Vec2i *b) {
   if (a == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "a is NULL.", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL.");
     return 0.0f;
   }
   if (b == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "b is NULL.", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "b is NULL.");
     return 0.0f;
   }
 
@@ -441,7 +439,7 @@ float d_vec2i_dot(const d_Vec2i *a, const d_Vec2i *b) {
 
 float d_vec2i_len(const d_Vec2i *a) {
   if (a == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "a is NULL.", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL.");
     return 0.0f;
   }
   return sqrt(pow(a->x, 2) + pow(a->y, 2));
@@ -463,7 +461,7 @@ d_Vec4 d_vec4(const float x, const float y, const float z, const float w) {
 
 void d_mat4(d_Mat4 *a, bool identity) {
   if (a == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "a is NULL.", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL.");
     return;
   }
 
@@ -480,12 +478,11 @@ void d_mat4(d_Mat4 *a, bool identity) {
 
 void d_mat4_translate(d_Mat4 *a, const d_Vec3 *pos) {
   if (a == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "a is NULL.", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL.");
     return;
   }
   if (pos == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "pos is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "pos is NULL.");
     return;
   }
 
@@ -496,12 +493,11 @@ void d_mat4_translate(d_Mat4 *a, const d_Vec3 *pos) {
 
 void d_mat4_rotate(d_Mat4 *a, const d_Vec3 *rot) {
   if (a == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "a is NULL.", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL.");
     return;
   }
   if (rot == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "rot is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "rot is NULL.");
     return;
   }
 
@@ -535,12 +531,11 @@ void d_mat4_rotate(d_Mat4 *a, const d_Vec3 *rot) {
 
 void d_mat4_scale(d_Mat4 *a, const d_Vec3 *scale) {
   if (a == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "a is NULL.", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL.");
     return;
   }
   if (scale == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "scale is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "scale is NULL.");
     return;
   }
 
@@ -552,7 +547,7 @@ void d_mat4_scale(d_Mat4 *a, const d_Vec3 *scale) {
 void d_mat4_perspective(d_Mat4 *a, float fov_degrees, float aspect_ratio,
                         float near, float far) {
   if (a == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "a is NULL.", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL.");
     return;
   }
 
@@ -569,7 +564,7 @@ void d_mat4_perspective(d_Mat4 *a, float fov_degrees, float aspect_ratio,
 void d_mat4_orthogonal(d_Mat4 *a, float left, float right, float bottom,
                        float top, float near, float far) {
   if (a == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "a is NULL.", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL.");
     return;
   }
   a->data[0] = 2 / (right - left);
@@ -584,22 +579,19 @@ void d_mat4_orthogonal(d_Mat4 *a, float left, float right, float bottom,
 void d_mat4_look_at(d_Mat4 *a, const d_Vec3 *position,
                     const d_Vec3 *target_position, const d_Vec3 *forward) {
   if (a == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "a is NULL.", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL.");
     return;
   }
   if (position == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "position is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "position is NULL.");
     return;
   }
   if (target_position == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "target_position is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "target_position is NULL.");
     return;
   }
   if (forward == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "forward is NULL.", __FILE__,
-                  __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "forward is NULL.");
     return;
   }
   d_mat4(a, true);
@@ -627,7 +619,7 @@ void d_mat4_look_at(d_Mat4 *a, const d_Vec3 *position,
 
 void d_mat4_inverse(d_Mat4 *a) {
   if (a == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "a is NULL.", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL.");
     return;
   }
 
@@ -668,11 +660,11 @@ d_Mat4 d_mat4_multiply(const d_Mat4 *a, const d_Mat4 *b) {
   d_Mat4 result;
   d_mat4(&result, true);
   if (a == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "a is NULL.", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL.");
     return result;
   }
   if (b == NULL) {
-    d_throw_error(&DUCKY_NULL_REFERENCE, "b is NULL.", __FILE__, __FUNCTION__);
+    d_throw_error(DUCKY_NULL_REFERENCE, "b is NULL.");
     return result;
   }
 
