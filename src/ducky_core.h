@@ -153,6 +153,14 @@ char *d_str_replace(char *str, const char *target, const char *replacement);
 
 char *d_str_append(const char *destination, const char *target);
 
+/**
+ * @brief Converts an `int` to `char*`. Result needs to be freed with `free`.
+ *
+ * @param target
+ * @return char*
+ */
+char *d_str_from_int(int target);
+
 #pragma endregion
 
 #endif
@@ -204,6 +212,11 @@ d_Array *d_array_create_internal(size_t element_size, size_t initial_capacity) {
   if (array == NULL) {
     d_throw_error(DUCKY_MEMORY_FAILURE, "Failed to allocate memory for array.");
     return NULL;
+  }
+
+  if (initial_capacity == 0) {
+    d_throw_error(DUCKY_WARNING, "initial_capacity must be more than 0!");
+    initial_capacity = 1;
   }
 
   array->data = malloc(element_size * initial_capacity);
@@ -631,6 +644,13 @@ char *d_str_append(const char *destination, const char *target) {
 
   new_str[new_length] = '\0';
   return new_str;
+}
+
+char *d_str_from_int(int target) {
+  char *result = malloc(sizeof(char) * 32);
+  sprintf(result, "%d", target);
+
+  return result;
 }
 
 #pragma endregion

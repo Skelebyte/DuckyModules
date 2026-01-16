@@ -547,6 +547,9 @@ d_Shader *d_shader_create(d_Renderer *renderer, const char *vertex_file_path,
   }
 
   char *number = malloc(sizeof(char) * 4);
+  if (number == NULL) {
+    d_throw_error(DUCKY_MEMORY_FAILURE, "Failed to malloc number.");
+  }
 
   sprintf(number, "%d", renderer->max_point_lights);
   char *res = d_str_append("#define MAX_POINT_LIGHTS ", number);
@@ -567,7 +570,8 @@ d_Shader *d_shader_create(d_Renderer *renderer, const char *vertex_file_path,
   free(res);
 
   GLuint vert = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vert, 1, (const char *const *)vertex_shader->data, NULL);
+  const char *vert_src = vertex_shader->data;
+  glShaderSource(vert, 1, &vert_src, NULL);
   glCompileShader(vert);
   if (d_check_shader_compile(vert, "VERTEX_SHADER") == -1) {
     d_throw_error(DUCKY_FAILURE, "Failed to compile vertex shader.");
@@ -578,7 +582,8 @@ d_Shader *d_shader_create(d_Renderer *renderer, const char *vertex_file_path,
   }
 
   GLuint frag = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(frag, 1, (const char *const *)fragment_shader->data, NULL);
+  const char *frag_src = fragment_shader->data;
+  glShaderSource(frag, 1, &frag_src, NULL);
   glCompileShader(frag);
   if (d_check_shader_compile(frag, "FRAGMENT_SHADER") == -1) {
     d_throw_error(DUCKY_FAILURE, "Failed to compile fragment shader.");
@@ -593,17 +598,51 @@ d_Shader *d_shader_create(d_Renderer *renderer, const char *vertex_file_path,
   shader->id = glCreateProgram();
 
   glAttachShader(shader->id, vert);
+  glDeleteShader(vert);
+
   glAttachShader(shader->id, frag);
+  glDeleteShader(frag);
+
   glLinkProgram(shader->id);
   if (d_check_shader_link(shader->id) == -1) {
     d_throw_error(DUCKY_FAILURE, "Failed to link shader program.");
     free(shader);
+    return NULL;
+  }
+
+  if (glIsProgram(shader->id) == GL_FALSE) {
+    d_throw_error(DUCKY_FAILURE, "Shader progam is NOT valid!");
+    free(shader);
+    return NULL;
   }
 
   return shader;
 }
-void d_shader_destroy(d_Shader *shader) {}
-void d_shader_activate(d_Shader *shader) {}
+void d_shader_destroy(d_Shader *shader) {
+  if (shader == NULL) {
+    d_throw_error(DUCKY_NULL_REFERENCE, "shader is NULL.");
+    return;
+  }
+
+  glDeleteProgram(shader->id);
+}
+void d_shader_activate(d_Shader *shader) {
+  if (shader == NULL) {
+    d_throw_error(DUCKY_NULL_REFERENCE, "shader is NULL.");
+    return;
+  }
+
+  glUseProgram(shader->id);
+
+  GLenum error = glGetError();
+  char *error_str = d_str_from_int(error);
+  if (error != GL_NO_ERROR) {
+    char *message =
+        d_str_append("Failed to use shader program. OpenGL Error: ", error_str);
+    d_throw_error(DUCKY_FAILURE, message);
+  }
+  free(error_str);
+}
 #pragma endregion
 
 #endif

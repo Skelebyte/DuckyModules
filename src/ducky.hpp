@@ -1,3 +1,0 @@
-// namespace ducky {
-
-// }; // namespace ducky

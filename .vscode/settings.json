@@ -3,6 +3,7 @@
     "DUCKY_CORE_IMPL",
     "DUCKY_WINDOW_IMPL",
     "DUCKY_GFX_IMPL",
+    "DUCKY_OBJS_IMPL",
 
   ]
 }

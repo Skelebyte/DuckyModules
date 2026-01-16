@@ -16,6 +16,14 @@ int main(int argc, char **argv) {
   Renderer *renderer = d_renderer_create();
   d_renderer_set_max_lights(renderer, 1, 16, 16);
 
+  d_Shader *shader = d_shader_create(renderer, "assets/shaders/vertex.glsl",
+                                     "assets/shaders/fragment.glsl");
+
+  d_shader_activate(shader);
+
+  char *temp = "this is temp";
+  printf("%s\n", temp);
+
   while (d_window_running(window)) {
     d_window_update(window);
 
@@ -24,6 +32,10 @@ int main(int argc, char **argv) {
     d_window_swap_buffers(window);
   }
 
+  temp = "this is not temp";
+  printf("%s\n", temp);
+
+  d_shader_destroy(shader);
   d_renderer_destroy(renderer);
   d_window_destroy(window);
 
