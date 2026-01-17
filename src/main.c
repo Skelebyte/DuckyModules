@@ -8,6 +8,8 @@
 #include "ducky_window.h"
 #define DUCKY_GFX_IMPL
 #include "ducky_gfx.h"
+#define DUCKY_OBJS_IMPL
+#include "ducky_objs.h"
 
 int main(int argc, char **argv) {
   d_core_init();
@@ -21,8 +23,11 @@ int main(int argc, char **argv) {
 
   d_shader_activate(shader);
 
-  char *temp = "this is temp";
-  printf("%s\n", temp);
+  d_Object *my_obj = d_object_create("cool_obj");
+  d_object_destroy(&my_obj);
+  if (my_obj == NULL) {
+    d_throw_error(DUCKY_SUCCESS, "it worked!");
+  }
 
   while (d_window_running(window)) {
     d_window_update(window);
@@ -31,9 +36,6 @@ int main(int argc, char **argv) {
 
     d_window_swap_buffers(window);
   }
-
-  temp = "this is not temp";
-  printf("%s\n", temp);
 
   d_shader_destroy(shader);
   d_renderer_destroy(renderer);
