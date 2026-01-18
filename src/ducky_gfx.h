@@ -111,7 +111,7 @@ d_Color d_color(const float r, const float g, const float b, const float a);
  * `line_smoothing` - `true`
  */
 d_Renderer *d_renderer_create();
-void d_renderer_destroy(d_Renderer *renderer);
+void d_renderer_destroy(d_Renderer **renderer);
 void d_renderer_set_ambient_color(d_Renderer *renderer, const d_Color color);
 void d_renderer_set_max_lights(d_Renderer *renderer,
                                const unsigned int max_directional_lights,
@@ -140,7 +140,7 @@ d_VAO *d_vao_create();
   #### Throws:
   - `DUCKY_NULL_REFERENCE`: If the `vao` argument is NULL.
 */
-void d_vao_destroy(d_VAO *vao);
+void d_vao_destroy(d_VAO **vao);
 /*
   Bind the specified VAO for use.
   #### Parameters:
@@ -177,14 +177,14 @@ void d_vao_link_attrib(const d_VAO *vao, const d_VBO *vbo,
 
 #pragma region VBO Functions
 d_VBO *d_vbo_create(const float *vertices, const size_t size);
-void d_vbo_destroy(d_VBO *vbo);
+void d_vbo_destroy(d_VBO **vbo);
 void d_vbo_bind(d_VBO *vbo);
 void d_vbo_unbind(d_VBO *vbo);
 #pragma endregion
 
 #pragma region EBO Functions
 d_EBO *d_ebo_create(const unsigned int *indices, const size_t size);
-void d_ebo_destroy(d_EBO *ebo);
+void d_ebo_destroy(d_EBO **ebo);
 void d_ebo_bind(d_EBO *ebo);
 void d_ebo_unbind(d_EBO *ebo);
 #pragma endregion
@@ -192,7 +192,7 @@ void d_ebo_unbind(d_EBO *ebo);
 #pragma region Shader Functions
 d_Shader *d_shader_create(d_Renderer *renderer, const char *vertex_file_path,
                           const char *fragment_file_path);
-void d_shader_destroy(d_Shader *shader);
+void d_shader_destroy(d_Shader **shader);
 void d_shader_activate(d_Shader *shader);
 #pragma endregion
 
@@ -294,12 +294,18 @@ d_Renderer *d_renderer_create() {
   return renderer;
 }
 
-void d_renderer_destroy(d_Renderer *renderer) {
+void d_renderer_destroy(d_Renderer **renderer) {
   if (renderer == NULL) {
-    d_throw_error(DUCKY_NULL_REFERENCE, "renderer is NULL.");
+    d_throw_error(DUCKY_NULL_REFERENCE, "renderer (d_Renderer **) is NULL.");
     return;
   }
-  free(renderer);
+  if (*renderer == NULL) {
+    d_throw_error(DUCKY_NULL_REFERENCE, "renderer (d_Renderer *) is NULL.");
+    return;
+  }
+
+  free(*renderer);
+  *renderer = NULL;
 }
 
 void d_renderer_set_max_lights(d_Renderer *renderer,
@@ -409,13 +415,18 @@ d_VAO *d_vao_create() {
   return vao;
 }
 
-void d_vao_destroy(d_VAO *vao) {
+void d_vao_destroy(d_VAO **vao) {
   if (vao == NULL) {
-    d_throw_error(DUCKY_NULL_REFERENCE, "vao is NULL.");
+    d_throw_error(DUCKY_NULL_REFERENCE, "vao (d_VAO **) is NULL.");
     return;
   }
-  glDeleteVertexArrays(1, &vao->id);
-  free(vao);
+  if (*vao == NULL) {
+    d_throw_error(DUCKY_NULL_REFERENCE, "vao (d_VAO *) is NULL.");
+    return;
+  }
+  glDeleteVertexArrays(1, &(*vao)->id);
+  free(*vao);
+  *vao = NULL;
 }
 
 void d_vao_bind(d_VAO *vao) {
@@ -467,13 +478,18 @@ d_VBO *d_vbo_create(const float *vertices, const size_t size) {
   return vbo;
 }
 
-void d_vbo_destroy(d_VBO *vbo) {
+void d_vbo_destroy(d_VBO **vbo) {
   if (vbo == NULL) {
-    d_throw_error(DUCKY_NULL_REFERENCE, "vbo is NULL.");
+    d_throw_error(DUCKY_NULL_REFERENCE, "vbo (d_VBO **) is NULL.");
     return;
   }
-  glDeleteBuffers(1, &vbo->id);
-  free(vbo);
+  if (*vbo == NULL) {
+    d_throw_error(DUCKY_NULL_REFERENCE, "vbo (d_VBO *) is NULL.");
+    return;
+  }
+  glDeleteBuffers(1, &(*vbo)->id);
+  free(*vbo);
+  *vbo = NULL;
 }
 
 void d_vbo_bind(d_VBO *vbo) {}
@@ -493,13 +509,19 @@ d_EBO *d_ebo_create(const unsigned int *indices, const size_t size) {
   return ebo;
 }
 
-void d_ebo_destroy(d_EBO *ebo) {
+void d_ebo_destroy(d_EBO **ebo) {
   if (ebo == NULL) {
-    d_throw_error(DUCKY_NULL_REFERENCE, "ebo is NULL.");
+    d_throw_error(DUCKY_NULL_REFERENCE, "ebo (d_EBO **) is NULL.");
     return;
   }
-  glDeleteBuffers(1, &ebo->id);
-  free(ebo);
+  if (*ebo == NULL) {
+    d_throw_error(DUCKY_NULL_REFERENCE, "ebo (d_EBO *) is NULL.");
+    return;
+  }
+
+  glDeleteBuffers(1, &(*ebo)->id);
+  free(*ebo);
+  *ebo = NULL;
 }
 
 void d_ebo_bind(d_EBO *ebo) {
@@ -576,8 +598,8 @@ d_Shader *d_shader_create(d_Renderer *renderer, const char *vertex_file_path,
   if (d_check_shader_compile(vert, "VERTEX_SHADER") == -1) {
     d_throw_error(DUCKY_FAILURE, "Failed to compile vertex shader.");
     free(shader);
-    d_file_destroy(vertex_shader);
-    d_file_destroy(fragment_shader);
+    d_file_destroy(&vertex_shader);
+    d_file_destroy(&fragment_shader);
     return NULL;
   }
 
@@ -588,12 +610,12 @@ d_Shader *d_shader_create(d_Renderer *renderer, const char *vertex_file_path,
   if (d_check_shader_compile(frag, "FRAGMENT_SHADER") == -1) {
     d_throw_error(DUCKY_FAILURE, "Failed to compile fragment shader.");
     free(shader);
-    d_file_destroy(vertex_shader);
-    d_file_destroy(fragment_shader);
+    d_file_destroy(&vertex_shader);
+    d_file_destroy(&fragment_shader);
     return NULL;
   }
-  d_file_destroy(vertex_shader);
-  d_file_destroy(fragment_shader);
+  d_file_destroy(&vertex_shader);
+  d_file_destroy(&fragment_shader);
 
   shader->id = glCreateProgram();
 
@@ -618,13 +640,20 @@ d_Shader *d_shader_create(d_Renderer *renderer, const char *vertex_file_path,
 
   return shader;
 }
-void d_shader_destroy(d_Shader *shader) {
+void d_shader_destroy(d_Shader **shader) {
   if (shader == NULL) {
-    d_throw_error(DUCKY_NULL_REFERENCE, "shader is NULL.");
+    d_throw_error(DUCKY_NULL_REFERENCE, "shader (d_Shader **) is NULL.");
+    return;
+  }
+  if (*shader == NULL) {
+    d_throw_error(DUCKY_NULL_REFERENCE, "shader (d_Shader *) is NULL.");
     return;
   }
 
-  glDeleteProgram(shader->id);
+  glDeleteProgram((*shader)->id);
+
+  free(*shader);
+  *shader = NULL;
 }
 void d_shader_activate(d_Shader *shader) {
   if (shader == NULL) {

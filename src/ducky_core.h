@@ -85,7 +85,7 @@ void d_array_add(d_Array *array, void *element);
   (*(type *)d_array_get_internal(array, index))
 
 void *d_array_get_internal(d_Array *array, unsigned int index);
-void d_array_destroy(d_Array *array);
+void d_array_destroy(d_Array **array);
 
 #pragma endregion
 
@@ -100,7 +100,7 @@ typedef struct d_Event {
 } Event, d_Event;
 
 d_Event *d_event_create(const char *name);
-void d_event_destroy(d_Event *event);
+void d_event_destroy(d_Event **event);
 void d_event_add_listener(d_Event *event, d_EventListener listener);
 void d_event_invoke(d_Event *event);
 
@@ -111,7 +111,7 @@ typedef struct d_EventSystem {
 d_EventSystem *d_event_system;
 
 d_EventSystem *d_event_system_create();
-void d_event_system_destroy(d_EventSystem *event_system);
+void d_event_system_destroy(d_EventSystem **event_system);
 d_Event *d_event_system_get_event(d_EventSystem *event_system,
                                   const char *name);
 void d_event_system_add_event(d_EventSystem *event_system, const char *name);
@@ -127,7 +127,7 @@ typedef struct d_File {
 } File, d_File;
 
 d_File *d_file_read(const char *path);
-void d_file_destroy(d_File *file);
+void d_file_destroy(d_File **file);
 void d_file_edit(d_File *file, const char *data);
 void d_file_save(d_File *file);
 
@@ -273,15 +273,22 @@ void *d_array_get_internal(d_Array *array, unsigned int index) {
   return (char *)array->data + (index * array->element_size);
 }
 
-void d_array_destroy(d_Array *array) {
-  if (array != NULL) {
-    if (array->data != NULL) {
-      free(array->data);
-    }
-    free(array);
-  } else {
-    d_throw_error(DUCKY_NULL_REFERENCE, "array is NULL.");
+void d_array_destroy(d_Array **array) {
+  if (array == NULL) {
+    d_throw_error(DUCKY_NULL_REFERENCE, "array (d_Array **) is NULL.");
+    return;
   }
+  if (*array == NULL) {
+    d_throw_error(DUCKY_NULL_REFERENCE, "array (d_Array *) is NULL.");
+    return;
+  }
+
+  if ((*array)->data != NULL) {
+    free((*array)->data);
+  }
+
+  free((*array));
+  *array = NULL;
 }
 
 #pragma endregion
@@ -306,13 +313,19 @@ d_Event *d_event_create(const char *name) {
   return event;
 }
 
-void d_event_destroy(d_Event *event) {
-  if (event != NULL) {
-    d_array_destroy(event->listeners);
-    free(event);
-  } else {
-    d_throw_error(DUCKY_NULL_REFERENCE, "event is NULL.");
+void d_event_destroy(d_Event **event) {
+  if (event == NULL) {
+    d_throw_error(DUCKY_NULL_REFERENCE, "event (d_Event **) is NULL.");
+    return;
   }
+  if (*event == NULL) {
+    d_throw_error(DUCKY_NULL_REFERENCE, "event (d_Event *) is NULL.");
+    return;
+  }
+
+  d_array_destroy(&(*event)->listeners);
+  free(*event);
+  *event = NULL;
 }
 
 void d_event_add_listener(d_Event *event, d_EventListener listener) {
@@ -361,17 +374,25 @@ d_EventSystem *d_event_system_create() {
   return event_system;
 }
 
-void d_event_system_destroy(d_EventSystem *event_system) {
-  if (event_system != NULL) {
-    for (size_t i = 0; i < event_system->events->length; i++) {
-      d_Event *event = d_array_get(event_system->events, d_Event *, i);
-      d_event_destroy(event);
-    }
-    d_array_destroy(event_system->events);
-    free(event_system);
-  } else {
-    d_throw_error(DUCKY_NULL_REFERENCE, "event_system is NULL.");
+void d_event_system_destroy(d_EventSystem **event_system) {
+  if (event_system == NULL) {
+    d_throw_error(DUCKY_NULL_REFERENCE,
+                  "event_system (d_EventSystem **) is NULL.");
+    return;
   }
+  if (*event_system == NULL) {
+    d_throw_error(DUCKY_NULL_REFERENCE,
+                  "event_system (d_EventSystem *) is NULL.");
+    return;
+  }
+
+  for (size_t i = 0; i < (*event_system)->events->length; i++) {
+    d_Event *event = d_array_get((*event_system)->events, d_Event *, i);
+    d_event_destroy(&event);
+  }
+  d_array_destroy(&(*event_system)->events);
+  free(*event_system);
+  *event_system = NULL;
 }
 
 d_Event *d_event_system_get_event(d_EventSystem *event_system,
@@ -430,7 +451,7 @@ void d_core_init() {
 }
 
 void d_core_shutdown() {
-  d_event_system_destroy(d_event_system);
+  d_event_system_destroy(&d_event_system);
   free(d_last_error);
 }
 #pragma endregion
@@ -473,15 +494,21 @@ d_File *d_file_read(const char *path) {
   return d_file;
 }
 
-void d_file_destroy(d_File *file) {
-  if (file != NULL) {
-    if (file->data != NULL) {
-      free(file->data);
-    }
-    free(file);
-  } else {
-    d_throw_error(DUCKY_NULL_REFERENCE, "file is NULL.");
+void d_file_destroy(d_File **file) {
+  if (file == NULL) {
+    d_throw_error(DUCKY_NULL_REFERENCE, "file (d_File **) is NULL.");
+    return;
   }
+  if (*file == NULL) {
+    d_throw_error(DUCKY_NULL_REFERENCE, "file (d_File *) is NULL.");
+    return;
+  }
+
+  if ((*file)->data != NULL) {
+    free((*file)->data);
+  }
+  free(*file);
+  *file = NULL;
 }
 
 void d_file_edit(d_File *file, const char *data) {

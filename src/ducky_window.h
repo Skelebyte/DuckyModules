@@ -57,7 +57,7 @@ typedef enum d_WindowPopupType {
 #pragma region Viewport Functions
 d_Viewport *d_viewport_create(const int target_aspect_w,
                               const int target_aspect_h);
-void d_viewport_destroy(d_Viewport *viewport);
+void d_viewport_destroy(d_Viewport **viewport);
 #pragma endregion
 
 #pragma region Window Functions
@@ -87,7 +87,7 @@ d_Window *d_window_create(const char *title, const int width, const int height,
   #### Throws:
   - `DUCKY_NULL_REFERENCE`: If the `window` argument is NULL.
 */
-void d_window_destroy(d_Window *window);
+void d_window_destroy(d_Window **window);
 /*
   Update the specified window, processing events.
   #### Parameters:
@@ -133,12 +133,17 @@ d_Viewport *d_viewport_create(const int target_aspect_w,
   return viewport;
 }
 
-void d_viewport_destroy(d_Viewport *viewport) {
-  if (viewport != NULL) {
-    free(viewport);
-  } else {
-    d_throw_error(DUCKY_NULL_REFERENCE, "viewport is NULL.");
+void d_viewport_destroy(d_Viewport **viewport) {
+  if (viewport == NULL) {
+    d_throw_error(DUCKY_NULL_REFERENCE, "viewport (d_Viewport **) is NULL.");
+    return;
   }
+  if (*viewport == NULL) {
+    d_throw_error(DUCKY_NULL_REFERENCE, "viewport (d_Viewport *) is NULL.");
+    return;
+  }
+
+  free(*viewport);
 }
 
 d_Window *d_window_create(const char *title, const int width, const int height,
@@ -217,16 +222,23 @@ d_Window *d_window_create(const char *title, const int width, const int height,
   return window;
 }
 
-void d_window_destroy(d_Window *window) {
+void d_window_destroy(d_Window **window) {
   if (window == NULL) {
-    d_throw_error(DUCKY_NULL_REFERENCE, "window is NULL.");
+    d_throw_error(DUCKY_NULL_REFERENCE, "window (d_Window **) is NULL.");
+    return;
+  }
+  if (*window == NULL) {
+    d_throw_error(DUCKY_NULL_REFERENCE, "window (d_Window *) is NULL.");
     return;
   }
 
-  SDL_DestroyWindow((SDL_Window *)window->native_window);
-  SDL_GL_DestroyContext((SDL_GLContext)window->gl_context);
-  d_viewport_destroy(window->viewport);
+  SDL_DestroyWindow((SDL_Window *)(*window)->native_window);
+  SDL_GL_DestroyContext((SDL_GLContext)(*window)->gl_context);
+  d_viewport_destroy(&(*window)->viewport);
   SDL_Quit();
+
+  free(*window);
+  *window = NULL;
 }
 
 void d_window_update(d_Window *window) {

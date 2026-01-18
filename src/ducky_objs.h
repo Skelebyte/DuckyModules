@@ -133,7 +133,7 @@ void d_object_destroy(d_Object **target) {
     return;
   }
   if (*target == NULL) {
-    d_throw_error(DUCKY_NULL_REFERENCE, "target is NULL");
+    d_throw_error(DUCKY_NULL_REFERENCE, "target (d_Object *) is NULL");
     return;
   }
 
