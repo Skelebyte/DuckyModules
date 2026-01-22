@@ -1,0 +1,4 @@
+SDL3 (Zlib licence)
+GLAD (glad source: MIT, Khronose specs: Apache 2.0, EGL specs: )
+ufbx (MIT licence)
+stb_image (MIT licence)

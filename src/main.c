@@ -12,16 +12,22 @@ int main(int argc, char **argv) {
 
   d_shader_activate(shader);
 
-  d_Object *my_obj = d_object_create("cool_obj");
-  d_object_destroy(&my_obj);
+  d_MeshRenderer *mesh = d_mesh_renderer_create("assets/models/cube.fbx");
+  mesh->material = d_material_create("assets/textures/demo_diffuse.png",
+                                     "assets/textures/demo_specular.png",
+                                     d_color(1.0f, 1.0f, 1.0f, 1.0f));
 
   while (d_window_running(window)) {
     d_window_update(window);
 
     d_renderer_clear(d_color(0.2f, 0.3f, 0.3f, 1.0f));
 
+    d_mesh_renderer_update(mesh);
+
     d_window_swap_buffers(window);
   }
+
+  d_mesh_renderer_destroy(&mesh);
 
   d_shader_destroy(&shader);
   d_renderer_destroy(&renderer);

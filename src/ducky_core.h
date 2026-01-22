@@ -8,6 +8,8 @@
 #include <stdio.h>
 #endif
 
+typedef unsigned int d_uint;
+
 #pragma region Core
 
 void d_core_init();
@@ -40,6 +42,7 @@ typedef struct d_FullError {
   const char *message;
   const char *file;
   const char *function;
+  bool silent;
 } FullError, d_FullError;
 
 #pragma region Predefined Errors
@@ -59,10 +62,14 @@ d_FullError *d_last_error;
 #pragma endregion
 
 void d_throw_error_internal(const d_Error *error, const char *message,
-                            const char *file, const char *function);
+                            bool is_silent, const char *file,
+                            const char *function);
 
 #define d_throw_error(error, message)                                          \
-  d_throw_error_internal(&error, message, __FILE__, __FUNCTION__)
+  d_throw_error_internal(&error, message, false, __FILE__, __FUNCTION__)
+
+#define d_throw_error_silent(error, message)                                   \
+  d_throw_error_internal(&error, message, true, __FILE__, __FUNCTION__)
 
 #pragma endregion
 
@@ -84,7 +91,7 @@ void d_array_add(d_Array *array, void *element);
 #define d_array_get(array, type, index)                                        \
   (*(type *)d_array_get_internal(array, index))
 
-void *d_array_get_internal(d_Array *array, unsigned int index);
+void *d_array_get_internal(d_Array *array, d_uint index);
 void d_array_destroy(d_Array **array);
 
 #pragma endregion
@@ -144,23 +151,33 @@ void d_file_save(d_File *file);
  * the start of the string.
  * @return The position of the first character of `target` in the string, and
  * `-1` and no match was found.
- * @throws DUCKY_NULL_REFERENCE if `str` or `target` is NULL.
- * @throws DUCKY_EMPTY_REFERENCE if `str` or `target` is an empty string.
+ * @throws `DUCKY_NULL_REFERENCE` if `str` or `target` is NULL.
+ * @throws `DUCKY_EMPTY_REFERENCE` if `str` or `target` is an empty string.
  *
  */
-int d_str_find(const char *str, const char *target, unsigned int index_offset);
+int d_str_find(const char *str, const char *target, d_uint index_offset);
 
 char *d_str_replace(char *str, const char *target, const char *replacement);
 
+/**
+ * @brief Copies `target` to the end of `destination`, returning the new string.
+ *
+ * @param destination
+ * @param target
+ * @return The new string with `target` appended to `destination` (needs to be
+ * freed).
+ */
 char *d_str_append(const char *destination, const char *target);
 
 /**
- * @brief Converts an `int` to `char*`. Result needs to be freed with `free`.
+ * @brief Converts an `int` to `char*`. Result needs to be freed.
  *
  * @param target
  * @return char*
  */
 char *d_str_from_int(int target);
+
+bool d_is_path_valid(const char *path);
 
 #pragma endregion
 
@@ -189,11 +206,13 @@ const d_Error DUCKY_CRITICAL = {90, "DUCKY_CRITICAL"};
 d_FullError *d_last_error = NULL;
 
 void d_throw_error_internal(const d_Error *error, const char *message,
-                            const char *file, const char *function) {
+                            bool is_silent, const char *file,
+                            const char *function) {
   d_last_error->error = error;
   d_last_error->message = message;
   d_last_error->file = file;
   d_last_error->function = function;
+  d_last_error->silent = is_silent;
   d_event_invoke(d_event_system_get_event(d_event_system, "on_throw_error"));
 
 #ifdef DUCKY_CORE_PRINT_ERRORS
@@ -259,7 +278,7 @@ void d_array_add(d_Array *array, void *element) {
   array->length++;
 }
 
-void *d_array_get_internal(d_Array *array, unsigned int index) {
+void *d_array_get_internal(d_Array *array, d_uint index) {
   if (array == NULL) {
     d_throw_error(DUCKY_NULL_REFERENCE, "array is NULL.");
     return NULL;
@@ -286,8 +305,7 @@ void d_array_destroy(d_Array **array) {
   if ((*array)->data != NULL) {
     free((*array)->data);
   }
-
-  free((*array));
+  free(*array);
   *array = NULL;
 }
 
@@ -535,7 +553,7 @@ void d_file_edit(d_File *file, const char *data) {
 
 // using an int to count how many characters match the target, and when the
 // amount is equal to the length of the target, break.
-int d_str_find(const char *str, const char *target, unsigned int index_offset) {
+int d_str_find(const char *str, const char *target, d_uint index_offset) {
   if (str == NULL) {
     d_throw_error(DUCKY_NULL_REFERENCE, "str is NULL.");
     return -1;
@@ -680,6 +698,21 @@ char *d_str_from_int(int target) {
   sprintf(result, "%d", target);
 
   return result;
+}
+
+bool d_is_path_valid(const char *path) {
+  if (path == NULL) {
+    d_throw_error(DUCKY_WARNING, "path is NULL.");
+    return false;
+  }
+
+  FILE *file;
+  if ((file = fopen(path, "rb")) != NULL) {
+    fclose(file);
+    return true;
+  }
+
+  return false;
 }
 
 #pragma endregion

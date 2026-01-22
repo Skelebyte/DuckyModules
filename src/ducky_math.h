@@ -114,7 +114,7 @@ d_Vec4 d_vec4(const float x, const float y, const float z, const float w);
 #pragma endregion
 
 #pragma region Mat4 Functions
-void d_mat4(d_Mat4 *a, bool identity);
+d_Mat4 d_mat4(bool identity);
 void d_mat4_translate(d_Mat4 *a, const d_Vec3 *v);
 void d_mat4_rotate(d_Mat4 *a, const d_Vec3 *v);
 void d_mat4_scale(d_Mat4 *a, const d_Vec3 *v);
@@ -459,21 +459,20 @@ d_Vec4 d_vec4(const float x, const float y, const float z, const float w) {
 
 #pragma region Mat4 Functions
 
-void d_mat4(d_Mat4 *a, bool identity) {
-  if (a == NULL) {
-    d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL.");
-    return;
-  }
+d_Mat4 d_mat4(bool identity) {
+  d_Mat4 mat4;
 
   if (identity == true) {
     for (int i = 0; i < 16; i++) {
-      a->data[i] = (i % 5 == 0) ? 1.0f : 0.0f;
+      mat4.data[i] = (i % 5 == 0) ? 1.0f : 0.0f;
     }
   } else {
     for (int i = 0; i < 16; i++) {
-      a->data[i] = 0.0f;
+      mat4.data[i] = 0.0f;
     }
   }
+
+  return mat4;
 }
 
 void d_mat4_translate(d_Mat4 *a, const d_Vec3 *pos) {
@@ -501,12 +500,9 @@ void d_mat4_rotate(d_Mat4 *a, const d_Vec3 *rot) {
     return;
   }
 
-  d_Mat4 x_rot;
-  d_mat4(&x_rot, true);
-  d_Mat4 y_rot;
-  d_mat4(&y_rot, true);
-  d_Mat4 z_rot;
-  d_mat4(&z_rot, true);
+  d_Mat4 x_rot = d_mat4(true);
+  d_Mat4 y_rot = d_mat4(true);
+  d_Mat4 z_rot = d_mat4(true);
 
   d_Vec3 radians =
       d_vec3(d_to_radians(rot->x), d_to_radians(rot->y), d_to_radians(rot->z));
@@ -594,7 +590,8 @@ void d_mat4_look_at(d_Mat4 *a, const d_Vec3 *position,
     d_throw_error(DUCKY_NULL_REFERENCE, "forward is NULL.");
     return;
   }
-  d_mat4(a, true);
+  d_Mat4 temp = d_mat4(true);
+  a = &temp;
 
   d_Vec3 temp_up = d_vec3(0.0f, 1.0f, 0.0f);
   d_Vec3 temp_forward = d_vec3_sub(position, target_position);
@@ -623,8 +620,7 @@ void d_mat4_inverse(d_Mat4 *a) {
     return;
   }
 
-  Mat4 inv;
-  d_mat4(&inv, true);
+  Mat4 inv = d_mat4(true);
 
   inv.data[0] = a->data[0];
   inv.data[1] = a->data[4];
@@ -657,8 +653,7 @@ void d_mat4_inverse(d_Mat4 *a) {
 }
 
 d_Mat4 d_mat4_multiply(const d_Mat4 *a, const d_Mat4 *b) {
-  d_Mat4 result;
-  d_mat4(&result, true);
+  d_Mat4 result = d_mat4(true);
   if (a == NULL) {
     d_throw_error(DUCKY_NULL_REFERENCE, "a is NULL.");
     return result;

@@ -168,11 +168,10 @@ void main() {
   if (texture(diffuse_texture, texture_coord).a < 0.1)
     discard;
 
-  FragColor = texture(diffuse_texture, texture_coord);
-
-  // if (unlit == false) {
-  //   vec4 lighting = point_light() + spot_light() + directional_light();
-  //   FragColor = lighting;
-  // } else {
-  // }
+  if (unlit == false) {
+    vec4 lighting = point_light() + spot_light() + directional_light();
+    FragColor = lighting;
+  } else {
+    FragColor = texture(diffuse_texture, texture_coord);
+  }
 }

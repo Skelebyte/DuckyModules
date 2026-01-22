@@ -321,6 +321,8 @@ void d_window_popup(d_WindowPopupType type, const char *title,
 
 void d_window_popup_error() {
   if (d_last_error != NULL) {
+    if (d_last_error->silent == true)
+      return;
     char message[1024];
     snprintf(
         message, sizeof(message),
